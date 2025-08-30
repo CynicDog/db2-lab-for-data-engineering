@@ -392,15 +392,142 @@ While a DBA typically manages user accounts, as an ETL developer, you must under
 
 ### Key Privileges for ETL
 
-  * **`SELECT`**: The most basic permission, required to read data from source tables.
-  * **`INSERT`, `UPDATE`, `DELETE`**: These are crucial for loading and transforming data in target tables.
-  * **`LOAD`**: A high-performance method for bulk-loading data, often preferred in production ETL processes. This privilege is different from standard `INSERT` and is a key concept for efficient data migration.
+As an ETL developer, you'll need specific permissions to perform your tasks. Your boss told you to ask the DBA for access, so you'll want to know exactly what to request. At a minimum, you'll need the following privileges:
 
-The `GRANT` and `REVOKE` statements are used to manage these permissions. For example, to grant `SELECT` on the `EMPLOYEE` table to a user named `etl_user`:
+  * **`SELECT`**: This is the most basic permission, required to read data from source tables. You can't extract data without it.
+  * **`INSERT`, `UPDATE`, `DELETE`**: These are crucial for loading, transforming, and manipulating data in your target tables. **INSERT** is for adding new rows, **UPDATE** is for changing existing ones, and **DELETE** is for removing rows.
+  * **`LOAD`**: This is a high-performance method for bulk-loading data, which is often preferred in production ETL processes. This privilege is separate from standard **INSERT** and is key for efficient data migration.
+
+### Step-by-Step User and Access Control
+
+To make this scenario more concrete, let's walk through the full process a DBA would follow, starting with creating a new operating system user and then granting them privileges inside DB2.  
+The `db2inst1` user (instance owner) has the necessary administrative privileges to perform these actions.
+
+#### 1. Creating the Operating System User
+
+Unlike databases such as Oracle or PostgreSQL, DB2 does **not** maintain its own internal list of users.  
+Instead, DB2 relies on the **underlying operating system (or an external service like LDAP/Kerberos)** for authentication.  
+
+That means before a user can connect to a DB2 database, they must exist at the OS level.  
+DB2 itself does not store their password — it delegates authentication to the OS, then applies authorization rules (grants, roles, privileges) internally.
+
+For example, on Linux, a DBA can create the `etl_user` account:
+
+```bash
+sudo useradd -m etl_user
+sudo passwd etl_user
+```
+
+This creates the OS account `etl_user` with a home directory and password.
+
+You can confirm with:
+
+```bash
+getent passwd etl_user
+```
+
+#### 2. Connecting as the New User
+
+Once the OS account exists, the user can attempt to connect to DB2.
+From the shell:
+
+```bash
+su - etl_user
+db2 connect to SAMPLE user etl_user using <password>
+```
+
+If authentication succeeds, DB2 recognizes `etl_user` as a valid user ID.
+
+#### 3. Granting Privileges
+
+By default, a newly created OS user has **no privileges** inside DB2.
+A DBA (e.g., `db2inst1`) must explicitly grant permissions.
+
+For example:
+
+```bash
+db2 grant connect on database to user etl_user;
+```
+
+To give `etl_user` access to specific tables:
+
+```bash
+db2 "GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE DB2INST1.SALES TO USER etl_user;"
+```
+
+Or on views:
+
+```bash
+db2 "GRANT SELECT ON TABLE DB2INST1.EMPLOYEE_VIEW TO USER etl_user;"
+```
+
+#### 4. Revoking Privileges
+
+If `etl_user` no longer requires certain access, a DBA can remove privileges:
 
 ```sql
-GRANT SELECT ON TABLE DB2INST1.EMPLOYEE TO USER etl_user;
+db2 "REVOKE INSERT ON TABLE DB2INST1.SALES FROM USER etl_user;"
 ```
+
+This ensures users only retain the minimum permissions they need.
+
+<details><summary>Examples</summary>
+
+### 1. User Attempts Access Without Privileges
+
+When `etl_user_1` connects to the SAMPLE database and tries to query a table, DB2 denies the request because no privileges were granted:
+
+```bash
+[etl_user_1@662c53b54754 ~]$ db2 connect to SAMPLE user etl_user_1 using 'SomePassword'
+
+   Database Connection Information
+
+ Database server        = DB2/LINUXX8664 11.5.8.0
+ SQL authorization ID   = ETL_USER_1
+ Local database alias   = SAMPLE
+
+[etl_user_1@662c53b54754 ~]$ db2 "select * from DB2INST1.SALES"
+SQL0551N  The statement failed because the authorization ID does not have the 
+required authorization or privilege to perform the operation.  
+Authorization ID: "ETL_USER_1".  Operation: "SELECT".  
+Object: "DB2INST1.SALES".  SQLSTATE=42501
+```
+
+### 2. DBA Grants Privileges
+
+The DBA (`db2inst1`) must explicitly grant access rights. For example, to allow `etl_user_1` to read and modify the `SALES` table:
+
+```bash
+[db2inst1@662c53b54754 ~]$ db2 "GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE DB2INST1.SALES TO USER etl_user_1;"
+DB20000I  The SQL command completed successfully.
+```
+
+### 3. User Retries With Privileges
+
+Now that the privileges are granted, `etl_user_1` can query the table successfully:
+
+```bash
+[etl_user_1@662c53b54754 ~]$ db2 "select * from DB2INST1.SALES"
+
+SALES_DATE SALES_PERSON    REGION          SALES
+---------- --------------- --------------- -----------
+12/31/2005 LUCCHESSI       Ontario-South             1
+12/31/2005 LEE             Ontario-South             3
+12/31/2005 LEE             Quebec                    1
+12/31/2005 LEE             Manitoba                  2
+12/31/2005 GOUNOT          Quebec                    1
+03/29/2006 LUCCHESSI       Ontario-South             3
+03/29/2006 LUCCHESSI       Quebec                    1
+03/29/2006 LEE             Ontario-South             2
+03/29/1996 LEE             Ontario-North             2
+03/29/2006 LEE             Quebec                    3
+03/29/2006 LEE             Manitoba                  5
+03/29/2006 GOUNOT          Ontario-South             3
+03/29/2006 GOUNOT          Quebec                    1
+03/29/2006 GOUNOT          Manitoba                  7
+```
+
+</details>
 
 ## 5\. Backup and Recovery
 
@@ -413,4 +540,5 @@ You can perform a full database backup using the `db2 backup` command. This is o
 ```bash
 db2 backup db SAMPLE to /path/to/backup/directory
 ```
+
 
