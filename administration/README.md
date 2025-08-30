@@ -16,7 +16,7 @@ db2 connect to SAMPLE user DB2INST1
 
 Once connected, you can execute SQL statements directly or use administrative commands.
 
-<details><summary>Example</summary>
+<details><summary>Examples</summary>
 
 ```
 [db2inst1@662c53b54754 ~]$ db2 connect to SAMPLE user DB2INST1
@@ -531,14 +531,69 @@ SALES_DATE SALES_PERSON    REGION          SALES
 
 ## 5\. Backup and Recovery
 
-Knowing the backup and recovery procedures is essential for data integrity. A failed ETL job could lead to data corruption, and a backup would be the last resort for recovery.
+Knowing the backup and recovery procedures is essential for data integrity. A failed ETL job could lead to data corruption, and a backup is often the last resort for recovery.
 
 ### Backup Command
 
-You can perform a full database backup using the `db2 backup` command. This is often done by a DBA, but understanding its role is important.
+You can perform a full database backup using the `db2 backup` command. This is an operation that requires an exclusive database connection, which means all other connections must be terminated. While a DBA typically performs this, understanding the complete process is crucial.
+
+#### Step 1: Force all applications off the database
+
+Before you can back up the database, you must ensure there are no active connections. The `deactivate` command might not be sufficient, so you should forcefully disconnect any remaining applications.
 
 ```bash
-db2 backup db SAMPLE to /path/to/backup/directory
+db2 force applications all
 ```
 
+#### Step 2: Deactivate the database
 
+After forcing connections off, you need to deactivate the database instance. This command shuts down the database gracefully, ensuring a clean state for the backup.
+
+```bash
+db2 deactivate db SAMPLE
+```
+
+#### Step 3: Run the backup command
+
+Once the database is inactive and all connections are terminated, you can run the `backup` command. You must specify a valid and accessible directory for the backup image. The command below uses the corrected path from your successful operation.
+
+```bash
+db2 backup db SAMPLE to /database/config/db2inst1/backup/
+```
+
+If the command is successful, you will receive a message similar to:
+
+```
+Backup successful. The timestamp for this backup image is : 20250830063440
+```
+
+This timestamp is a unique identifier for the backup file.
+
+### Recovery Command
+
+If data corruption occurs, a DBA can use the backup image to restore the database to a consistent state.
+
+```bash
+db2 restore db SAMPLE from /database/config/db2inst1/backup/
+```
+
+<details><summary>Examples</summary>
+
+```
+[db2inst1@662c53b54754 ~]$ mkdir backup
+[db2inst1@662c53b54754 ~]$ pwd
+/database/config/db2inst1
+[db2inst1@662c53b54754 ~]$ db2 backup db SAMPLE to //database/config/db2inst1/backup/
+
+Backup successful. The timestamp for this backup image is : 20250830063440
+
+[db2inst1@662c53b54754 ~]$ db2 restore db SAMPLE from /database/config/db2inst1/backup/
+SQL2539W  The specified name of the backup image to restore is the same as the 
+name of the target database.  Restoring to an existing database that is the 
+same as the backup image database will cause the current database to be 
+overwritten by the backup version.
+Do you want to continue ? (y/n) y
+DB20000I  The RESTORE DATABASE command completed successfully.
+```
+
+</details>
