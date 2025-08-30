@@ -624,27 +624,15 @@ Check the rollforward status:
 ```bash
 db2 get db cfg for SAMPLE | grep -i rollforward
 ```
+> This will give an entry that says `Rollforward pending = NO`. 
 
-```
-Rollforward pending = NO
-```
-
-* Confirms the database is fully recovered.
-
-Check active databases:
-
-```bash
-db2 list active databases
-```
-
-```
-SQL1611W  No data was returned by Database System Monitor.
-```
-
-* This is expected if no connections exist. Activate the database:
-
+Activate and connect to the database as: 
 ```bash
 db2 activate db SAMPLE
 db2 connect to SAMPLE
 ```
 
+Verify active connections: 
+```bash
+db2 list active databases
+```
