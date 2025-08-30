@@ -31,8 +31,6 @@ Enter current password for DB2INST1:
 
 </details>
 
------
-
 ## 2\. Managing Database Objects
 
 As an ETL developer, you'll interact with various database objects. You need to know how to list and inspect them.
@@ -109,8 +107,6 @@ VSTAFAC2                        DB2INST1        V     2025-08-30-05.02.03.359705
 ```
 
 </details>
-
------
 
 ## 3\. Database Health and Status
 
@@ -384,8 +380,6 @@ db2 get db cfg for SAMPLE
   
 </details>
 
------
-
 ## 4\. User and Access Control
 
 While a DBA typically manages user accounts, as an ETL developer, you must understand how permissions are granted. Your boss mentioned requesting access from a DBA, so knowing what to ask for is key.
@@ -636,3 +630,4 @@ Verify active connections:
 ```bash
 db2 list active databases
 ```
+
