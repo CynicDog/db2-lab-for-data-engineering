@@ -155,258 +155,232 @@ db2 get db cfg for SAMPLE
 ```
 [db2inst1@662c53b54754 ~]$ db2 get db cfg for SAMPLE
 
-# --- General Configuration ---
-# Your core database settings.
-# `Database code page` (1208) and `Database code set` (UTF-8) are important for ensuring
-# character encoding consistency between your source data, DB2, and Informatica.
-# `Database page size` (8192) affects how much data can be stored on a single page,
-# which influences I/O efficiency. Larger pages can be better for large rows or scans.
- Database configuration release level                    = 0x1500
- Database release level                                  = 0x1500
- Update to database level pending                        = NO (0x0)
- Database territory                                      = US
- Database code page                                      = 1208
- Database code set                                       = UTF-8
- Database country/region code                            = 1
- Database collating sequence                             = IDENTITY
- Alternate collating sequence              (ALT_COLLATE) = 
- Number compatibility                                    = OFF
- Varchar2 compatibility                                  = OFF
- Date compatibility                                      = OFF
- Database page size                                      = 8192
+       Database Configuration for Database SAMPLE
 
- Statement concentrator                      (STMT_CONC) = OFF
+ Database configuration release level                    = 0x1500
+ Database release level                                  = 0x1500
 
- Discovery support for this database       (DISCOVER_DB) = ENABLE
+ Update to database level pending                        = NO (0x0)
+ Database territory                                      = US
+ Database code page                                      = 1208
+ Database code set                                       = UTF-8
+ Database country/region code                            = 1
+ Database collating sequence                             = IDENTITY
+ Alternate collating sequence              (ALT_COLLATE) = 
+ Number compatibility                                    = OFF
+ Varchar2 compatibility                                  = OFF
+ Date compatibility                                      = OFF
+ Database page size                                      = 8192
 
-# --- Optimization and Concurrency ---
-# `DFT_QUERYOPT` and `DFT_DEGREE` are key for performance. `DFT_QUERYOPT`
-# controls the aggressiveness of the query optimizer, while `DFT_DEGREE`
-# determines the level of parallelism for operations like table scans.
-# `LOCKTIMEOUT` is critical for ETL. `-1` means "wait forever," which can lead to
-# job hang-ups. A positive value would cause the job to fail after a timeout,
-# allowing for better error handling and recovery.
- Restrict access                                         = NO
- Default query optimization class         (DFT_QUERYOPT) = 5
- Degree of parallelism                      (DFT_DEGREE) = 1
- Continue upon arithmetic exceptions   (DFT_SQLMATHWARN) = NO
- Default refresh age                   (DFT_REFRESH_AGE) = 0
- Default maintained table types for opt (DFT_MTTB_TYPES) = SYSTEM
- Number of frequent values retained     (NUM_FREQVALUES) = 10
- Number of quantiles retained            (NUM_QUANTILES) = 20
+ Statement concentrator                      (STMT_CONC) = OFF
 
- Decimal floating point rounding mode  (DECFLT_ROUNDING) = ROUND_HALF_EVEN
+ Discovery support for this database       (DISCOVER_DB) = ENABLE
 
- DECIMAL arithmetic mode                (DEC_ARITHMETIC) = 
- Large aggregation                   (LARGE_AGGREGATION) = NO
+ Restrict access                                         = NO
+ Default query optimization class         (DFT_QUERYOPT) = 5
+ Degree of parallelism                      (DFT_DEGREE) = 1
+ Continue upon arithmetic exceptions   (DFT_SQLMATHWARN) = NO
+ Default refresh age                   (DFT_REFRESH_AGE) = 0
+ Default maintained table types for opt (DFT_MTTB_TYPES) = SYSTEM
+ Number of frequent values retained     (NUM_FREQVALUES) = 10
+ Number of quantiles retained            (NUM_QUANTILES) = 20
 
- Backup pending                                          = NO
+ Decimal floating point rounding mode  (DECFLT_ROUNDING) = ROUND_HALF_EVEN
 
- All committed transactions have been written to disk    = YES
- Rollforward pending                                     = NO
- Restore pending                                         = NO
+ DECIMAL arithmetic mode                (DEC_ARITHMETIC) = 
+ Large aggregation                   (LARGE_AGGREGATION) = NO
 
- Upgrade pending                                         = NO
+ Backup pending                                          = NO
 
- Multi-page file allocation enabled                      = YES
+ All committed transactions have been written to disk    = YES
+ Rollforward pending                                     = NO
+ Restore pending                                         = NO
 
- Log retain for recovery status                          = NO
- User exit for logging status                            = YES
+ Upgrade pending                                         = NO
 
-# --- Memory Management ---
-# `SELF_TUNING_MEM` is a key feature. When `ON`, DB2 automatically manages memory
-# heaps like `LOCKLIST`, `PCKCACHESZ`, and `SORTHEAP`. This is common in modern
-# environments, as it reduces manual configuration effort.
- Self tuning memory                    (SELF_TUNING_MEM) = ON
- Size of database shared memory (4KB)  (DATABASE_MEMORY) = AUTOMATIC(79840)
- Database memory threshold               (DB_MEM_THRESH) = 100
- Max storage for lock list (4KB)              (LOCKLIST) = AUTOMATIC(4096)
- Percent. of lock lists per application       (MAXLOCKS) = AUTOMATIC(10)
- Package cache size (4KB)                   (PCKCACHESZ) = AUTOMATIC((MAXAPPLS*8))
- Sort heap thres for shared sorts (4KB) (SHEAPTHRES_SHR) = AUTOMATIC(5000)
- Sort list heap (4KB)                         (SORTHEAP) = AUTOMATIC(256)
+ Multi-page file allocation enabled                      = YES
 
- Database heap (4KB)                            (DBHEAP) = AUTOMATIC(1200)
- Catalog cache size (4KB)              (CATALOGCACHE_SZ) = 402
- Log buffer size (4KB)                        (LOGBUFSZ) = 2150
- Utilities heap size (4KB)                (UTIL_HEAP_SZ) = AUTOMATIC(5000)
- SQL statement heap (4KB)                     (STMTHEAP) = AUTOMATIC(8192)
- Default application heap (4KB)             (APPLHEAPSZ) = AUTOMATIC(256)
- Application Memory Size (4KB)             (APPL_MEMORY) = AUTOMATIC(40000)
- Statistics heap size (4KB)               (STAT_HEAP_SZ) = AUTOMATIC(4384)
+ Log retain for recovery status                          = NO
+ User exit for logging status                            = YES
 
-# --- Lock Management and Concurrency ---
-# `DLCHKTIME` (deadlock check time) and `LOCKTIMEOUT` are crucial.
-# They determine how the database handles concurrent transactions. A short
-# `LOCKTIMEOUT` can cause ETL jobs to fail quickly, which is a good practice
-# for automated error handling and job restarts.
- Interval for checking deadlock (ms)         (DLCHKTIME) = 10000
- Lock timeout (sec)                        (LOCKTIMEOUT) = -1
+ Self tuning memory                    (SELF_TUNING_MEM) = ON
+ Size of database shared memory (4KB)  (DATABASE_MEMORY) = AUTOMATIC(79840)
+ Database memory threshold               (DB_MEM_THRESH) = 100
+ Max storage for lock list (4KB)              (LOCKLIST) = AUTOMATIC(4096)
+ Percent. of lock lists per application       (MAXLOCKS) = AUTOMATIC(10)
+ Package cache size (4KB)                   (PCKCACHESZ) = AUTOMATIC((MAXAPPLS*8))
+ Sort heap thres for shared sorts (4KB) (SHEAPTHRES_SHR) = AUTOMATIC(5000)
+ Sort list heap (4KB)                         (SORTHEAP) = AUTOMATIC(256)
 
-# --- I/O and Prefetching ---
-# These parameters relate to disk I/O performance. `NUM_IOCLEANERS` and
-# `NUM_IOSERVERS` affect how data is written and read from disk.
-# Their `AUTOMATIC` setting means DB2 is managing them based on system load.
- Changed pages threshold                (CHNGPGS_THRESH) = 80
- Number of asynchronous page cleaners   (NUM_IOCLEANERS) = AUTOMATIC(4)
- Number of I/O servers                   (NUM_IOSERVERS) = AUTOMATIC(4)
- Sequential detect flag                      (SEQDETECT) = YES
- Default prefetch size (pages)         (DFT_PREFETCH_SZ) = AUTOMATIC
+ Database heap (4KB)                            (DBHEAP) = AUTOMATIC(1200)
+ Catalog cache size (4KB)              (CATALOGCACHE_SZ) = 402
+ Log buffer size (4KB)                        (LOGBUFSZ) = 2150
+ Utilities heap size (4KB)                (UTIL_HEAP_SZ) = AUTOMATIC(5000)
+ SQL statement heap (4KB)                     (STMTHEAP) = AUTOMATIC(8192)
+ Default application heap (4KB)             (APPLHEAPSZ) = AUTOMATIC(256)
+ Application Memory Size (4KB)             (APPL_MEMORY) = AUTOMATIC(40000)
+ Statistics heap size (4KB)               (STAT_HEAP_SZ) = AUTOMATIC(4384)
 
- Track modified pages                         (TRACKMOD) = NO
+ Interval for checking deadlock (ms)         (DLCHKTIME) = 10000
+ Lock timeout (sec)                        (LOCKTIMEOUT) = -1
 
- Default number of containers                            = 1
- Default tablespace extentsize (pages)   (DFT_EXTENT_SZ) = 32
+ Changed pages threshold                (CHNGPGS_THRESH) = 80
+ Number of asynchronous page cleaners   (NUM_IOCLEANERS) = AUTOMATIC(4)
+ Number of I/O servers                   (NUM_IOSERVERS) = AUTOMATIC(4)
+ Sequential detect flag                      (SEQDETECT) = YES
+ Default prefetch size (pages)         (DFT_PREFETCH_SZ) = AUTOMATIC
 
- Max number of active applications            (MAXAPPLS) = AUTOMATIC(40)
- Average number of active applications       (AVG_APPLS) = AUTOMATIC(1)
- Lifetime of cached credentials   (AUTHN_CACHE_DURATION) = 3
- Max number of users in the cache    (AUTHN_CACHE_USERS) = 0
- Max DB files open per database               (MAXFILOP) = 61440
+ Track modified pages                         (TRACKMOD) = NO
 
-# --- Logging Configuration ---
-# This is directly relevant to the boss's request for log details.
-# `LOGFILSIZ`, `LOGPRIMARY`, and `LOGSECOND` determine the size and number of
-# log files. A full log can halt the database.
-# `Path to log files` tells you exactly where the transaction logs are stored,
-# which is essential for troubleshooting and understanding disk usage.
- Active log space disk capacity (MB)      (LOG_DISK_CAP) = 0
- Log file size (4KB)                         (LOGFILSIZ) = 1024
- Number of primary log files                (LOGPRIMARY) = 16
- Number of secondary log files               (LOGSECOND) = 22
- Changed path to log files                  (NEWLOGPATH) = 
- Path to log files                                       = /database/data/db2inst1/NODE0000/SQL00001/LOGSTREAM0000/
- Overflow log path                     (OVERFLOWLOGPATH) = 
- Mirror log path                         (MIRRORLOGPATH) = 
- First active log file                                   = S0000002.LOG
- Block log on disk full                (BLK_LOG_DSK_FUL) = NO
- Block non logged operations            (BLOCKNONLOGGED) = NO
- Percent max primary log space by transaction  (MAX_LOG) = 0
- Num. of active log files for 1 active UOW(NUM_LOG_SPAN) = 0
+ Default number of containers                            = 1
+ Default tablespace extentsize (pages)   (DFT_EXTENT_SZ) = 32
 
- Percent log file reclaimed before soft chckpt (SOFTMAX) = 0
- Target for oldest page in LBP       (PAGE_AGE_TRGT_MCR) = 240
+ Max number of active applications            (MAXAPPLS) = AUTOMATIC(40)
+ Average number of active applications       (AVG_APPLS) = AUTOMATIC(1)
+ Lifetime of cached credentials   (AUTHN_CACHE_DURATION) = 3
+ Max number of users in the cache    (AUTHN_CACHE_USERS) = 0
+ Max DB files open per database               (MAXFILOP) = 61440
 
- HADR database role                                      = STANDARD
- HADR local host name                  (HADR_LOCAL_HOST) = 
- HADR local service name                (HADR_LOCAL_SVC) = 
- HADR remote host name                (HADR_REMOTE_HOST) = 
- HADR remote service name              (HADR_REMOTE_SVC) = 
- HADR instance name of remote server  (HADR_REMOTE_INST) = 
- HADR timeout value                       (HADR_TIMEOUT) = 120
- HADR target list                     (HADR_TARGET_LIST) = 
- HADR log write synchronization mode     (HADR_SYNCMODE) = NEARSYNC
- HADR spool log data limit (4KB)      (HADR_SPOOL_LIMIT) = AUTOMATIC(0)
- HADR log replay delay (seconds)     (HADR_REPLAY_DELAY) = 0
- HADR peer window duration (seconds)  (HADR_PEER_WINDOW) = 0
+ Active log space disk capacity (MB)      (LOG_DISK_CAP) = 0
+ Log file size (4KB)                         (LOGFILSIZ) = 1024
+ Number of primary log files                (LOGPRIMARY) = 16
+ Number of secondary log files               (LOGSECOND) = 22
+ Changed path to log files                  (NEWLOGPATH) = 
+ Path to log files                                       = /database/data/db2inst1/NODE0000/SQL00001/LOGSTREAM0000/
+ Overflow log path                     (OVERFLOWLOGPATH) = 
+ Mirror log path                         (MIRRORLOGPATH) = 
+ First active log file                                   = S0000002.LOG
+ Block log on disk full                (BLK_LOG_DSK_FUL) = NO
+ Block non logged operations            (BLOCKNONLOGGED) = NO
+ Percent max primary log space by transaction  (MAX_LOG) = 0
+ Num. of active log files for 1 active UOW(NUM_LOG_SPAN) = 0
 
- First log archive method                 (LOGARCHMETH1) = DISK:/database/logs/
- Archive compression for logarchmeth1    (LOGARCHCOMPR1) = OFF
- Options for logarchmeth1                  (LOGARCHOPT1) = 
- Second log archive method                (LOGARCHMETH2) = OFF
- Archive compression for logarchmeth2    (LOGARCHCOMPR2) = OFF
- Options for logarchmeth2                  (LOGARCHOPT2) = 
- Failover log archive path                (FAILARCHPATH) = 
- Number of log archive retries on error   (NUMARCHRETRY) = 5
- Log archive retry Delay (secs)         (ARCHRETRYDELAY) = 20
- Vendor options                              (VENDOROPT) = 
+ Percent log file reclaimed before soft chckpt (SOFTMAX) = 0
+ Target for oldest page in LBP       (PAGE_AGE_TRGT_MCR) = 240
 
-# --- Backup and Recovery Configuration ---
-# `NUM_DB_BACKUPS` and `REC_HIS_RETENTN` specify the retention policy for
-# backups and recovery history. This is important for understanding how far
-# back you can recover the database in case of a disaster.
- Auto restart enabled                      (AUTORESTART) = ON
- Index re-creation time and redo index build  (INDEXREC) = SYSTEM (RESTART)
- Log pages during index build            (LOGINDEXBUILD) = OFF
- Default number of loadrec sessions    (DFT_LOADREC_SES) = 1
- Number of database backups to retain   (NUM_DB_BACKUPS) = 12
- Recovery history retention (days)     (REC_HIS_RETENTN) = 90
- Auto deletion of recovery objects    (AUTO_DEL_REC_OBJ) = OFF
+ HADR database role                                      = STANDARD
+ HADR local host name                  (HADR_LOCAL_HOST) = 
+ HADR local service name                (HADR_LOCAL_SVC) = 
+ HADR remote host name                (HADR_REMOTE_HOST) = 
+ HADR remote service name              (HADR_REMOTE_SVC) = 
+ HADR instance name of remote server  (HADR_REMOTE_INST) = 
+ HADR timeout value                       (HADR_TIMEOUT) = 120
+ HADR target list                     (HADR_TARGET_LIST) = 
+ HADR log write synchronization mode     (HADR_SYNCMODE) = NEARSYNC
+ HADR spool log data limit (4KB)      (HADR_SPOOL_LIMIT) = AUTOMATIC(0)
+ HADR log replay delay (seconds)     (HADR_REPLAY_DELAY) = 0
+ HADR peer window duration (seconds)  (HADR_PEER_WINDOW) = 0
 
- TSM management class                    (TSM_MGMTCLASS) = 
- TSM node name                            (TSM_NODENAME) = 
- TSM owner                                   (TSM_OWNER) = 
- TSM password                             (TSM_PASSWORD) = 
+ First log archive method                 (LOGARCHMETH1) = DISK:/database/logs/
+ Archive compression for logarchmeth1    (LOGARCHCOMPR1) = OFF
+ Options for logarchmeth1                  (LOGARCHOPT1) = 
+ Second log archive method                (LOGARCHMETH2) = OFF
+ Archive compression for logarchmeth2    (LOGARCHCOMPR2) = OFF
+ Options for logarchmeth2                  (LOGARCHOPT2) = 
+ Failover log archive path                (FAILARCHPATH) = 
+ Number of log archive retries on error   (NUMARCHRETRY) = 5
+ Log archive retry Delay (secs)         (ARCHRETRYDELAY) = 20
+ Vendor options                              (VENDOROPT) = 
 
-# --- Automatic Maintenance ---
-# This section indicates what DB2 is doing automatically.
-# `AUTO_RUNSTATS` being `ON` is a great sign. It means DB2 is automatically
-# updating table statistics, which is crucial for the query optimizer to
-# create efficient access plans for your ETL queries.
- Automatic maintenance                      (AUTO_MAINT) = ON
-   Automatic database backup            (AUTO_DB_BACKUP) = OFF
-   Automatic table maintenance          (AUTO_TBL_MAINT) = ON
-     Automatic runstats                  (AUTO_RUNSTATS) = ON
-       Real-time statistics            (AUTO_STMT_STATS) = ON
-       Statistical views              (AUTO_STATS_VIEWS) = OFF
-       Automatic sampling                (AUTO_SAMPLING) = ON
-       Automatic column group statistics (AUTO_CG_STATS) = OFF
-     Automatic reorganization               (AUTO_REORG) = OFF
+ Auto restart enabled                      (AUTORESTART) = ON
+ Index re-creation time and redo index build  (INDEXREC) = SYSTEM (RESTART)
+ Log pages during index build            (LOGINDEXBUILD) = OFF
+ Default number of loadrec sessions    (DFT_LOADREC_SES) = 1
+ Number of database backups to retain   (NUM_DB_BACKUPS) = 12
+ Recovery history retention (days)     (REC_HIS_RETENTN) = 90
+ Auto deletion of recovery objects    (AUTO_DEL_REC_OBJ) = OFF
 
-# --- Monitoring and Logging ---
-# `MON_REQ_METRICS`, `MON_ACT_METRICS`, and `MON_OBJ_METRICS` are important for
-# collecting performance data. `BASE` or `EXTENDED` levels of monitoring
-# will determine what information is available for analyzing ETL job performance.
- Auto-Revalidation                          (AUTO_REVAL) = DEFERRED
+ TSM management class                    (TSM_MGMTCLASS) = 
+ TSM node name                            (TSM_NODENAME) = 
+ TSM owner                                   (TSM_OWNER) = 
+ TSM password                             (TSM_PASSWORD) = 
 
- Currently Committed                        (CUR_COMMIT) = ON
- CHAR output with DECIMAL input        (DEC_TO_CHAR_FMT) = NEW
- Enable XML Character operations        (ENABLE_XMLCHAR) = YES
- Enforce Constraint                  (DDL_CONSTRAINT_DEF) = YES
- Enable row compression by default  (DDL_COMPRESSION_DEF) = NO
- Replication site ID                      (REPL_SITE_ID) = 0
- Monitor Collect Settings
- Request metrics                       (MON_REQ_METRICS) = BASE
- Activity metrics                      (MON_ACT_METRICS) = BASE
- Object metrics                        (MON_OBJ_METRICS) = EXTENDED
- Routine data                             (MON_RTN_DATA) = NONE
-   Routine executable list            (MON_RTN_EXECLIST) = OFF
- Unit of work events                      (MON_UOW_DATA) = NONE
-   UOW events with package list        (MON_UOW_PKGLIST) = OFF
-   UOW events with executable list    (MON_UOW_EXECLIST) = OFF
- Lock timeout events                   (MON_LOCKTIMEOUT) = NONE
- Deadlock events                          (MON_DEADLOCK) = WITHOUT_HIST
- Lock wait events                         (MON_LOCKWAIT) = NONE
- Lock wait event threshold               (MON_LW_THRESH) = 5000000
- Number of package list entries         (MON_PKGLIST_SZ) = 32
- Lock event notification level         (MON_LCK_MSG_LVL) = 1
+ Automatic maintenance                      (AUTO_MAINT) = ON
+   Automatic database backup            (AUTO_DB_BACKUP) = OFF
+   Automatic table maintenance          (AUTO_TBL_MAINT) = ON
+     Automatic runstats                  (AUTO_RUNSTATS) = ON
+       Real-time statistics            (AUTO_STMT_STATS) = ON
+       Statistical views              (AUTO_STATS_VIEWS) = OFF
+       Automatic sampling                (AUTO_SAMPLING) = ON
+       Automatic column group statistics (AUTO_CG_STATS) = OFF
+     Automatic reorganization               (AUTO_REORG) = OFF
 
- SMTP Server                               (SMTP_SERVER) = 
- SQL conditional compilation flags         (SQL_CCFLAGS) = 
- Section actuals setting               (SECTION_ACTUALS) = NONE
- Connect procedure                        (CONNECT_PROC) = 
- Adjust temporal SYSTEM_TIME period (SYSTIME_PERIOD_ADJ) = NO
- Log DDL Statements                      (LOG_DDL_STMTS) = NO
- Log Application Information             (LOG_APPL_INFO) = NO
- Default data capture on new Schemas   (DFT_SCHEMAS_DCC) = NO
- Strict I/O for EXTBL_LOCATION         (EXTBL_STRICT_IO) = NO
- Allowed paths for external tables      (EXTBL_LOCATION) = /database/config/db2inst1
- Default table organization              (DFT_TABLE_ORG) = ROW
- Default string units                     (STRING_UNITS) = SYSTEM
- National character string mapping       (NCHAR_MAPPING) = CHAR_CU32
- Database is in write suspend state                      = NO
- Extended row size support             (EXTENDED_ROW_SZ) = ENABLE
- Encryption Library for Backup                 (ENCRLIB) = 
- Encryption Options for Backup                (ENCROPTS) = 
+ Auto-Revalidation                          (AUTO_REVAL) = DEFERRED
 
- WLM Collection Interval (minutes)     (WLM_COLLECT_INT) = 0
- Target agent load per CPU core    (WLM_AGENT_LOAD_TRGT) = AUTOMATIC(14)
- WLM admission control enabled      (WLM_ADMISSION_CTRL) = NO
- Allocated share of CPU resources       (WLM_CPU_SHARES) = 1000
- CPU share behavior (hard/soft)     (WLM_CPU_SHARE_MODE) = HARD
- Maximum allowable CPU utilization (%)   (WLM_CPU_LIMIT) = 0
- Activity Sort Memory Limit          (ACT_SORTMEM_LIMIT) = NONE
- Control file recovery path       (CTRL_FILE_RECOV_PATH) = 
- Encrypted database                                      = NO
- Procedural language stack trace        (PL_STACK_TRACE) = NONE
- HADR SSL certificate label             (HADR_SSL_LABEL) = 
- HADR SSL Hostname Validation        (HADR_SSL_HOST_VAL) = OFF
+ Currently Committed                        (CUR_COMMIT) = ON
+ CHAR output with DECIMAL input        (DEC_TO_CHAR_FMT) = NEW
+ Enable XML Character operations        (ENABLE_XMLCHAR) = YES
+ Enforce Constraint                  (DDL_CONSTRAINT_DEF) = YES
+ Enable row compression by default  (DDL_COMPRESSION_DEF) = NO
+ Replication site ID                      (REPL_SITE_ID) = 0
+ Monitor Collect Settings
+ Request metrics                       (MON_REQ_METRICS) = BASE
+ Activity metrics                      (MON_ACT_METRICS) = BASE
+ Object metrics                        (MON_OBJ_METRICS) = EXTENDED
+ Routine data                             (MON_RTN_DATA) = NONE
+   Routine executable list            (MON_RTN_EXECLIST) = OFF
+ Unit of work events                      (MON_UOW_DATA) = NONE
+   UOW events with package list        (MON_UOW_PKGLIST) = OFF
+   UOW events with executable list    (MON_UOW_EXECLIST) = OFF
+ Lock timeout events                   (MON_LOCKTIMEOUT) = NONE
+ Deadlock events                          (MON_DEADLOCK) = WITHOUT_HIST
+ Lock wait events                         (MON_LOCKWAIT) = NONE
+ Lock wait event threshold               (MON_LW_THRESH) = 5000000
+ Number of package list entries         (MON_PKGLIST_SZ) = 32
+ Lock event notification level         (MON_LCK_MSG_LVL) = 1
 
- BUFFPAGE size to be used by optimizer   (OPT_BUFFPAGE) = 0
- LOCKLIST size to be used by optimizer   (OPT_LOCKLIST) = 0
- MAXLOCKS size to be used by optimizer   (OPT_MAXLOCKS) = 0
- SORTHEAP size to be used by optimizer   (OPT_SORTHEAP) = 0
+ SMTP Server                               (SMTP_SERVER) = 
+ SQL conditional compilation flags         (SQL_CCFLAGS) = 
+ Section actuals setting               (SECTION_ACTUALS) = NONE
+ Connect procedure                        (CONNECT_PROC) = 
+ Adjust temporal SYSTEM_TIME period (SYSTIME_PERIOD_ADJ) = NO
+ Log DDL Statements                      (LOG_DDL_STMTS) = NO
+ Log Application Information             (LOG_APPL_INFO) = NO
+ Default data capture on new Schemas   (DFT_SCHEMAS_DCC) = NO
+ Strict I/O for EXTBL_LOCATION         (EXTBL_STRICT_IO) = NO
+ Allowed paths for external tables      (EXTBL_LOCATION) = /database/config/db2inst1
+ Default table organization              (DFT_TABLE_ORG) = ROW
+ Default string units                     (STRING_UNITS) = SYSTEM
+ National character string mapping       (NCHAR_MAPPING) = CHAR_CU32
+ Database is in write suspend state                      = NO
+ Extended row size support             (EXTENDED_ROW_SZ) = ENABLE
+ Encryption Library for Backup                 (ENCRLIB) = 
+ Encryption Options for Backup                (ENCROPTS) = 
+
+ WLM Collection Interval (minutes)     (WLM_COLLECT_INT) = 0
+ Target agent load per CPU core    (WLM_AGENT_LOAD_TRGT) = AUTOMATIC(14)
+ WLM admission control enabled      (WLM_ADMISSION_CTRL) = NO
+ Allocated share of CPU resources       (WLM_CPU_SHARES) = 1000
+ CPU share behavior (hard/soft)     (WLM_CPU_SHARE_MODE) = HARD
+ Maximum allowable CPU utilization (%)   (WLM_CPU_LIMIT) = 0
+ Activity Sort Memory Limit          (ACT_SORTMEM_LIMIT) = NONE
+ Control file recovery path       (CTRL_FILE_RECOV_PATH) = 
+ Encrypted database                                      = NO
+ Procedural language stack trace        (PL_STACK_TRACE) = NONE
+ HADR SSL certificate label             (HADR_SSL_LABEL) = 
+ HADR SSL Hostname Validation        (HADR_SSL_HOST_VAL) = OFF
+
+ BUFFPAGE size to be used by optimizer   (OPT_BUFFPAGE) = 0
+ LOCKLIST size to be used by optimizer   (OPT_LOCKLIST) = 0
+ MAXLOCKS size to be used by optimizer   (OPT_MAXLOCKS) = 0
+ SORTHEAP size to be used by optimizer   (OPT_SORTHEAP) = 0
 ```
+
+```
+[db2inst1@662c53b54754 ~]$ db2 get db cfg for SAMPLE
+```
+> The database configuration for `SAMPLE` provides important details about its setup and performance. Here are some of the most notable configurations from your output:
+>
+>   * **Data Encoding**: `Database code set = UTF-8`. This is a crucial setting that indicates the database supports a wide range of characters from different languages, which is essential for global data and ETL jobs.
+>   * **Concurrency Control**: `Lock timeout (sec) = -1`. A value of `-1` means that any application waiting for a lock will wait forever. This can cause ETL jobs to hang indefinitely if they encounter a lock from another process. In a production environment, this is often set to a specific timeout value (e.g., 60 seconds) to ensure that applications fail quickly and can be restarted.
+>   * **Automatic Maintenance**:
+>       * `Automatic maintenance (AUTO_MAINT) = ON`. This is a good sign that the database is configured to perform routine maintenance tasks.
+>       * `Automatic runstats (AUTO_RUNSTATS) = ON`. This is particularly important for ETL processes. **Runstats** collects information about the data distribution in tables, which the DB2 optimizer uses to create efficient query plans. When this is on, the database automatically keeps this information up-to-date, which is great for the performance of your ETL loads and transformations.
+>       * `Automatic reorganization (AUTO_REORG) = OFF`. While `runstats` is on, the database is not configured to automatically reorganize tables and indexes to reclaim space and improve performance. This might be a manual task performed by a DBA.
+>   * **Memory Management**: `Self tuning memory (SELF_TUNING_MEM) = ON`. This is a powerful feature where DB2 dynamically manages memory resources for key components like the `LOCKLIST`, `SORTHEAP`, and `PCKCACHESZ` to optimize performance. You can see that many of the memory-related parameters are set to `AUTOMATIC`, indicating this feature is active.
+>   * **Transaction Logging**:
+>       * `Log file size (4KB) (LOGFILSIZ) = 1024` and `Number of primary log files (LOGPRIMARY) = 16`. These parameters define the size of the transaction log files. When a log file fills up, the database switches to the next one. Understanding these values helps you monitor disk space and prevent the database from stopping due to full logs.
+>       * `Path to log files` specifies the directory where all the transaction logs are stored, which is vital for troubleshooting and recovery.
   
 </details>
 
@@ -439,3 +413,4 @@ You can perform a full database backup using the `db2 backup` command. This is o
 ```bash
 db2 backup db SAMPLE to /path/to/backup/directory
 ```
+
