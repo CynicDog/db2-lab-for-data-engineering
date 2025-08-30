@@ -529,7 +529,7 @@ SALES_DATE SALES_PERSON    REGION          SALES
 
 </details>
 
-## 5.\ Backup and Recovery
+## 5\. Backup and Recovery
 
 Knowing the backup and recovery procedures is essential for **data integrity**. ETL processes often modify large amounts of data, and a failed job could lead to data corruption. Understanding how to safely backup and restore a database is crucial for a DBA or ETL engineer.
 
@@ -647,3 +647,4 @@ SQL1611W  No data was returned by Database System Monitor.
 db2 activate db SAMPLE
 db2 connect to SAMPLE
 ```
+
