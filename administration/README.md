@@ -529,53 +529,53 @@ SALES_DATE SALES_PERSON    REGION          SALES
 
 </details>
 
-## 5\. Backup and Recovery
+## 5.\ Backup and Recovery
 
-Knowing the backup and recovery procedures is essential for data integrity. A failed ETL job could lead to data corruption, and a backup is often the last resort for recovery.
+Knowing the backup and recovery procedures is essential for **data integrity**. ETL processes often modify large amounts of data, and a failed job could lead to data corruption. Understanding how to safely backup and restore a database is crucial for a DBA or ETL engineer.
 
-### Backup Command
+### Full Database Backup
 
-You can perform a full database backup using the `db2 backup` command. This is an operation that requires an exclusive database connection, which means all other connections must be terminated. While a DBA typically performs this, understanding the complete process is crucial.
+You can perform a full database backup using the `db2 backup` command. A **backup requires an exclusive database connection**, so all other connections must be terminated.
 
 #### Step 1: Force all applications off the database
-
-Before you can back up the database, you must ensure there are no active connections. The `deactivate` command might not be sufficient, so you should forcefully disconnect any remaining applications.
 
 ```bash
 db2 force applications all
 ```
 
-#### Step 2: Deactivate the database
+* This disconnects all active users from the database to ensure a clean backup.
 
-After forcing connections off, you need to deactivate the database instance. This command shuts down the database gracefully, ensuring a clean state for the backup.
+#### Step 2: Deactivate the database
 
 ```bash
 db2 deactivate db SAMPLE
 ```
 
-#### Step 3: Run the backup command
+* Shuts down the database gracefully for backup.
 
-Once the database is inactive and all connections are terminated, you can run the `backup` command. You must specify a valid and accessible directory for the backup image. The command below uses the corrected path from your successful operation.
+#### Step 3: Run the backup command
 
 ```bash
 db2 backup db SAMPLE to /database/config/db2inst1/backup/
 ```
 
-If the command is successful, you will receive a message similar to:
+* Replace the path with a valid directory inside the container.
+* The output will show a **timestamp** identifying the backup image:
 
 ```
 Backup successful. The timestamp for this backup image is : 20250830063440
 ```
 
-This timestamp is a unique identifier for the backup file.
+### Restore Database from Backup
 
-### Recovery Command
-
-If data corruption occurs, a DBA can use the backup image to restore the database to a consistent state.
+If the database is corrupted or you need to roll back, restore it using:
 
 ```bash
 db2 restore db SAMPLE from /database/config/db2inst1/backup/
 ```
+
+* DB2 will prompt you if you are restoring over an existing database.
+* Once confirmed, the database will be restored to the state of the backup image.
 
 <details><summary>Examples</summary>
 
@@ -597,3 +597,53 @@ DB20000I  The RESTORE DATABASE command completed successfully.
 ```
 
 </details>
+
+### Rollforward Recovery
+
+If you are using **log-based recovery** or performing a **point-in-time recovery**, rollforward applies all committed transactions from the logs to bring the database up to date.
+
+#### Step 1: Run Rollforward
+
+```bash
+db2 "ROLLFORWARD DATABASE SAMPLE TO END OF LOGS AND STOP OVERFLOW LOG PATH (/database/data/db2inst1/NODE0000/SQL00001/OVERFLOW_LOGS/)"
+```
+
+* `TO END OF LOGS` applies all logs up to the last committed transaction.
+* `STOP OVERFLOW LOG PATH` specifies where overflow logs are temporarily stored during recovery.
+
+> What are Overflow Logs?
+> - DB2 writes transaction activity to active logs to ensure durability and allow recovery.
+> - Each log path has a finite space. When the active log fills up before the transaction commits, DB2 can’t continue writing unless there’s additional space.
+> - Overflow logs are additional directories that DB2 can use to temporarily store log data if the primary log path is full.
+> - During rollforward recovery, DB2 needs to read all committed transactions from the logs to restore the database. If some logs were written to overflow paths, those paths must be accessible, otherwise DB2 will report missing logs.
+
+#### Step 2: Verify Rollforward Completion
+
+Check the rollforward status:
+
+```bash
+db2 get db cfg for SAMPLE | grep -i rollforward
+```
+
+```
+Rollforward pending = NO
+```
+
+* Confirms the database is fully recovered.
+
+Check active databases:
+
+```bash
+db2 list active databases
+```
+
+```
+SQL1611W  No data was returned by Database System Monitor.
+```
+
+* This is expected if no connections exist. Activate the database:
+
+```bash
+db2 activate db SAMPLE
+db2 connect to SAMPLE
+```
