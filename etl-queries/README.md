@@ -359,3 +359,195 @@ Number of rows committed    = 2
 ```
 
 </details>
+
+## 4\. Advanced ETL and Transformation Patterns
+
+As an ETL engineer, your job isn't just about moving data; it's about moving the *right* data, in the right way, while ensuring quality and historical accuracy. This section covers crucial techniques that go beyond basic DML to handle real-world scenarios.
+
+### Advanced Aggregation: `GROUPING SETS`, `CUBE`, and `ROLLUP`
+
+These are powerful extensions to the `GROUP BY` clause that allow you to generate multiple levels of aggregation in a single query, which is much more efficient than writing multiple `GROUP BY` statements. They are crucial for creating summary reports in your data warehouse.
+
+  * **`ROLLUP`**: Generates subtotals for a specified hierarchy and a grand total.
+
+      * **Example**: To get total sales by region and a grand total.
+
+    ```sql
+    SELECT REGION, SUM(SALES) AS TOTAL_SALES
+    FROM SALES
+    GROUP BY ROLLUP(REGION);
+    ```
+
+  * **`CUBE`**: Generates subtotals for **all possible combinations** of the columns, as well as a grand total.
+
+      * **Example**: To see total sales by `REGION`, by `SALES_PERSON`, and by both.
+
+    ```sql
+    SELECT REGION, SALES_PERSON, SUM(SALES) AS TOTAL_SALES
+    FROM SALES
+    GROUP BY CUBE(REGION, SALES_PERSON);
+    ```
+
+  * **`GROUPING SETS`**: The most flexible option; you specify the exact combinations you want.
+
+      * **Example**: To get a total by `REGION` and a separate total by `SALES_PERSON` (without the combined total).
+
+    ```sql
+    SELECT REGION, SALES_PERSON, SUM(SALES) AS TOTAL_SALES
+    FROM SALES
+    GROUP BY GROUPING SETS((REGION), (SALES_PERSON));
+    ```
+    
+### Implementing Slowly Changing Dimensions (SCD)
+
+In data warehousing, a "dimension" table contains descriptive attributes (e.g., employee name, department, location). An SCD is a record-keeping approach for managing changes to these attributes over time. The most common type is **SCD Type 2**, which creates a new record for each change, preserving a full history.
+
+  * **Step 1: Create the Target Dimension Table**
+    First, you must create the destination table. This is a core DDL task in any ETL pipeline. Note that we include `start_date` and `end_date` columns to track history.
+
+    ```sql
+    -- Drop the table if it already exists to allow for rerunning the script
+    DROP TABLE DIM_EMPLOYEE;
+
+    -- Create the dimension table for employees
+    CREATE TABLE DIM_EMPLOYEE (
+        EMPNO CHAR(6) NOT NULL,
+        FIRSTNME VARCHAR(12) NOT NULL,
+        LASTNAME VARCHAR(15) NOT NULL,
+        WORKDEPT CHAR(3),
+        JOB CHAR(8),
+        START_DATE TIMESTAMP NOT NULL,
+        END_DATE TIMESTAMP
+    );
+    ```
+
+  * **Step 2: Load the Initial Data**
+
+    Before any changes happen, you need to load the current state of your `EMPLOYEE` data into the dimension table.
+
+    ```sql
+    -- Load all existing employees with an open-ended END_DATE
+    INSERT INTO DIM_EMPLOYEE (EMPNO, FIRSTNME, LASTNAME, WORKDEPT, JOB, START_DATE, END_DATE)
+    SELECT
+        EMPNO,
+        FIRSTNME,
+        LASTNAME,
+        WORKDEPT,
+        JOB,
+        CURRENT TIMESTAMP,
+        NULL
+    FROM EMPLOYEE;
+    ```
+
+    You now have a `DIM_EMPLOYEE` table populated with all employees and a `NULL` end date, indicating they are the current record.
+
+  * **Step 3: Simulate a Change**
+    An ETL process runs on a schedule. To simulate a new run where a change has occurred in the source system, let's update a record in the `EMPLOYEE` table.
+
+    ```sql
+    UPDATE EMPLOYEE
+    SET JOB = 'SR.MNGR'
+    WHERE EMPNO = '000020';
+    ```
+
+  * **Step 4: Implement the SCD Type 2 Logic (Two-Step Process)**
+    This is the core of the ETL logic. You cannot perform both an `UPDATE` and an `INSERT` in a single `MERGE` statement in DB2. The correct way is a two-step process: first, close out the old record, and second, insert the new one.
+
+    **Action 1: Close out the old record.**
+    Use an `UPDATE` statement to find any records that have changed in the source and set their `END_DATE` to the current timestamp.
+
+    ```sql
+    UPDATE DIM_EMPLOYEE D
+    SET END_DATE = CURRENT TIMESTAMP
+    WHERE D.END_DATE IS NULL
+      AND EXISTS (
+          SELECT 1
+          FROM EMPLOYEE S
+          WHERE S.EMPNO = D.EMPNO
+            AND (
+                 S.FIRSTNME IS DISTINCT FROM D.FIRSTNME OR
+                 S.LASTNAME IS DISTINCT FROM D.LASTNAME OR
+                 S.WORKDEPT IS DISTINCT FROM D.WORKDEPT OR
+                 S.JOB      IS DISTINCT FROM D.JOB
+            )
+      );
+    ```
+
+    **Action 2: Insert the new version.**
+    Now, insert the changed records as new rows with a new `START_DATE`.
+
+    ```sql
+    INSERT INTO DIM_EMPLOYEE (EMPNO, FIRSTNME, LASTNAME, WORKDEPT, JOB, START_DATE, END_DATE)
+    SELECT
+        S.EMPNO, S.FIRSTNME, S.LASTNAME, S.WORKDEPT, S.JOB,
+        CURRENT TIMESTAMP, NULL
+    FROM EMPLOYEE S
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM DIM_EMPLOYEE D
+        WHERE D.EMPNO = S.EMPNO
+          AND D.END_DATE IS NULL
+    );
+    ```
+
+    After these two commands, you will have two records for `EMPNO = '000020'` in your `DIM_EMPLOYEE` table, one with an `END_DATE` and the other as the current record.
+
+### Handling Duplicate Records
+
+Duplicates can corrupt your data model and lead to incorrect reports. The `ROW_NUMBER()` window function is the gold standard for identifying and removing them. It assigns a unique, sequential number to rows within a partition.
+
+  * **The Pattern**:
+    1.  Create a Common Table Expression (CTE) to partition your data by the columns that define uniqueness (e.g., `DEPTNO`, `DEPTNAME`).
+    2.  Use `ROW_NUMBER()` to assign a number to each row in the partition.
+    3.  Select or delete all rows where the row number is greater than `1`, as these are the duplicates.
+
+```sql
+WITH RankedDepartments AS (
+    SELECT
+        DEPTNO,
+        DEPTNAME,
+        -- For each unique combination of DEPTNO and DEPTNAME, start counting rows from 1.
+        ROW_NUMBER() OVER(PARTITION BY DEPTNO, DEPTNAME ORDER BY MGRNO) as rn
+    FROM DEPARTMENT
+)
+-- To view duplicates:
+SELECT * FROM RankedDepartments WHERE rn > 1;
+
+-- To delete duplicates:
+DELETE FROM DEPARTMENT WHERE (DEPTNO, DEPTNAME) IN (
+    SELECT DEPTNO, DEPTNAME
+    FROM RankedDepartments
+    WHERE rn > 1
+);
+```
+
+### Error Logging and Handling
+
+In production ETL, you need to gracefully handle data that fails validation. You should never let a bad row stop the entire process. A robust pattern is to log invalid data to a separate error table.
+
+  * **Step 1: Create an `ERROR_LOG` table.**
+
+    ```sql
+    CREATE TABLE ERROR_LOG (
+        LOG_ID INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1),
+        TABLE_NAME VARCHAR(50),
+        ERROR_DATE TIMESTAMP,
+        SOURCE_DATA VARCHAR(255),
+        ERROR_DESCRIPTION VARCHAR(255)
+    );
+    ```
+
+  * **Step 2: Log Bad Data.**
+    After loading your data into a staging table, run a `SELECT` statement to identify rows that fail a data quality check and insert them into the `ERROR_LOG` table. Let's assume we're checking for negative salaries.
+
+    ```sql
+    -- Insert bad rows into the error log table
+    INSERT INTO ERROR_LOG (TABLE_NAME, ERROR_DATE, SOURCE_DATA, ERROR_DESCRIPTION)
+    SELECT
+        'EMPLOYEE',
+        CURRENT TIMESTAMP,
+        EMPNO || ' ' || SALARY,
+        'Negative or zero salary detected'
+    FROM EMPLOYEE
+    WHERE SALARY <= 0;
+    ```
