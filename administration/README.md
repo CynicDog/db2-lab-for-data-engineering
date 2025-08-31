@@ -756,21 +756,63 @@ The output is broken down by each tablespace and provides vital information abou
 
 </details>
 
+## DB2 Tablespace Key Attributes
+
+A **tablespace** in DB2 is a logical storage unit that holds tables, indexes, and large objects (LOBs). Understanding its attributes is essential for **database design, performance tuning, and troubleshooting**.
+
 ### Key Attributes Explained
 
-  * **`Tablespace ID`**: A unique numerical identifier for the tablespace.
-  * **`Name`**: The human-readable name of the tablespace.
-      * **`SYSCATSPACE`**: Stores the database's system catalog tables (metadata about all objects).
-      * **`TEMPSPACE1`**: Used for temporary data during operations like sorts, joins, or other complex queries. This data is not persistent.
-      * **`USERSPACE1`** and **`IBMDB2SAMPLEREL`**: These are the main user-defined tablespaces where your data tables (like `EMPLOYEE` and `SALES`) are stored.
-  * **`Type`**: The storage management method.
-      * **`Database managed space` (DMS)**: The DB2 database engine directly manages the storage containers (files or devices). This is the modern, recommended approach.
-      * **`System managed space` (SMS)**: The operating system's file system manages the containers. This is an older method with some limitations.
-  * **`Contents`**: Describes the type of data stored. `All permanent data` means it stores user tables and indexes.
-  * **`State`**: The most important attribute for troubleshooting. The state describes the current condition of the tablespace.
-      * **`Normal` (`0x0000`)**: The tablespace is fully functional and can be read from and written to.
-      * **`Backup pending` (`0x0020`)**: The tablespace is in a restrictive state because it has been restored from a backup but has not yet had a new backup taken. Writes are not allowed until a full backup is completed to ensure the database can be recovered in the event of a failure. This was the root cause of your initial `SQL0290N` error.
-  * **`Page size (bytes)`**: The fundamental unit of disk space used for data storage. It's like the size of a single sheet in a notebook. DB2 reads and writes data in chunks of this size. A larger page size can be more efficient for large rows but may waste space for small rows.
-  * **`Extent size (pages)`**: The number of pages that DB2 allocates at once when a tablespace needs more space. It's like a block of chapters in a book.
-  * **`Total pages`**, **`Useable pages`**, **`Used pages`**, **`Free pages`**: These metrics describe the current storage capacity and usage.
-  * **`High water mark (pages)`**: The highest number of pages ever used in this tablespace. It's a critical metric for capacity planning. Even if `Used pages` drops after data is deleted, the `High water mark` remains to show peak usage, and the tablespace won't shrink below this level automatically.
+* **`Tablespace ID`**
+  A unique numerical identifier for the tablespace.
+
+* **`Name`**
+  The human-readable name of the tablespace. Common examples:
+
+  * **`SYSCATSPACE`** – Stores the database’s system catalog tables (metadata about all objects).
+  * **`TEMPSPACE1`** – Used for temporary data during operations like sorts, joins, or other complex queries. Data here is **non-persistent**.
+  * **`USERSPACE1`**, **`IBMDB2SAMPLEREL`** – User-defined tablespaces where your data tables (e.g., `EMPLOYEE`, `SALES`) are stored.
+
+* **`Type`**
+  Defines the storage management method:
+
+  * **Database Managed Space (DMS)** – DB2 directly manages storage containers (files or devices). Modern and recommended.
+  * **System Managed Space (SMS)** – The OS file system manages storage containers. Older method with some limitations.
+
+* **`Contents`**
+  Describes the type of data stored. For example:
+
+  * `All permanent data` – Stores user tables and indexes.
+  * `Temporary data` – Only used during query execution, like `TEMPSPACE1`.
+
+* **`State`**
+  The current operational condition of the tablespace. This is critical for **troubleshooting**. Possible states include:
+
+  | State                   | Hex Code | Description                                                                                                          |
+  | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+  | **Normal**              | `0x0000` | Fully functional; read and write operations are allowed.                                                             |
+  | **Backup Pending**      | `0x0020` | Tablespace restored from backup but no new backup taken. Writes are **restricted** until a full backup is completed. |
+  | **Copy Pending**        | `0x0040` | A backup copy is required before any further modifications; mostly used in DB2 High Availability setups.             |
+  | **Quiesced**            | `0x0080` | Tablespace is temporarily frozen; no changes allowed.                                                                |
+  | **Rollforward Pending** | `0x0100` | Tablespace needs log-based recovery (rollforward) before becoming available.                                         |
+  | **Recover Pending**     | `0x0200` | A recovery operation is required due to errors or incomplete operations.                                             |
+  | **Offline**             | `0x0400` | Tablespace is offline and inaccessible.                                                                              |
+  | **Load Pending**        | `0x0800` | Tablespace is waiting for a bulk load to complete.                                                                   |
+  | **Backup In Progress**  | `0x1000` | A backup operation is currently running on the tablespace.                                                           |
+
+* **`Page size (bytes)`**
+  The fundamental unit of storage. DB2 reads/writes in **chunks of this size**. Larger pages can be more efficient for large rows but may waste space for small rows.
+
+* **`Extent size (pages)`**
+  The number of pages DB2 allocates at once when the tablespace needs more space. Think of it as **allocating blocks of pages together**.
+
+* **`Total pages`**, **`Useable pages`**, **`Used pages`**, **`Free pages`**
+  Metrics that describe storage capacity and usage:
+
+  * `Total pages` – Maximum pages allocated for the tablespace.
+  * `Useable pages` – Pages available for table data.
+  * `Used pages` – Pages currently holding data.
+  * `Free pages` – Pages available for new data.
+
+* **`High water mark (pages)`**
+  The peak number of pages ever used. Even if rows are deleted later, the high water mark **does not decrease**, and the tablespace cannot shrink below this level automatically. Critical for **capacity planning**.
+
