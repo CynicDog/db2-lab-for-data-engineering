@@ -520,34 +520,3 @@ DELETE FROM DEPARTMENT WHERE (DEPTNO, DEPTNAME) IN (
     WHERE rn > 1
 );
 ```
-
-### Error Logging and Handling
-
-In production ETL, you need to gracefully handle data that fails validation. You should never let a bad row stop the entire process. A robust pattern is to log invalid data to a separate error table.
-
-  * **Step 1: Create an `ERROR_LOG` table.**
-
-    ```sql
-    CREATE TABLE ERROR_LOG (
-        LOG_ID INT NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1),
-        TABLE_NAME VARCHAR(50),
-        ERROR_DATE TIMESTAMP,
-        SOURCE_DATA VARCHAR(255),
-        ERROR_DESCRIPTION VARCHAR(255)
-    );
-    ```
-
-  * **Step 2: Log Bad Data.**
-    After loading your data into a staging table, run a `SELECT` statement to identify rows that fail a data quality check and insert them into the `ERROR_LOG` table. Let's assume we're checking for negative salaries.
-
-    ```sql
-    -- Insert bad rows into the error log table
-    INSERT INTO ERROR_LOG (TABLE_NAME, ERROR_DATE, SOURCE_DATA, ERROR_DESCRIPTION)
-    SELECT
-        'EMPLOYEE',
-        CURRENT TIMESTAMP,
-        EMPNO || ' ' || SALARY,
-        'Negative or zero salary detected'
-    FROM EMPLOYEE
-    WHERE SALARY <= 0;
-    ```
