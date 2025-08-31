@@ -756,7 +756,7 @@ The output is broken down by each tablespace and provides vital information abou
 
 </details>
 
-## DB2 Tablespace Key Attributes
+### DB2 Tablespace Key Attributes
 
 A **tablespace** in DB2 is a logical storage unit that holds tables, indexes, and large objects (LOBs). Understanding its attributes is essential for **database design, performance tuning, and troubleshooting**.
 
@@ -815,4 +815,5 @@ A **tablespace** in DB2 is a logical storage unit that holds tables, indexes, an
 
 * **`High water mark (pages)`**
   The peak number of pages ever used. Even if rows are deleted later, the high water mark **does not decrease**, and the tablespace cannot shrink below this level automatically. Critical for **capacity planning**.
+
 
