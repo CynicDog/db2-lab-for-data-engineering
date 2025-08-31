@@ -631,3 +631,146 @@ Verify active connections:
 db2 list active databases
 ```
 
+## 6\. Table Space Management
+
+Managing the physical storage of your database objects is critical for performance and availability. The `list tablespaces show detail` command provides a comprehensive view of the storage containers.
+
+```bash
+db2 "list tablespaces show detail"
+```
+
+The output is broken down by each tablespace and provides vital information about its health and usage.
+
+<details><summary>Examples</summary>
+
+```
+[db2inst1@02fbee59ef4e ~]$ db2 "list tablespaces show detail"
+
+           Tablespaces for Current Database
+
+ Tablespace ID                        = 0
+ Name                                 = SYSCATSPACE
+ Type                                 = Database managed space
+ Contents                             = All permanent data. Regular table space.
+ State                                = 0x0000
+   Detailed explanation:
+     Normal
+ Total pages                          = 20480
+ Useable pages                        = 20476
+ Used pages                           = 16652
+ Free pages                           = 3824
+ High water mark (pages)              = 16652
+ Page size (bytes)                    = 8192
+ Extent size (pages)                  = 4
+ Prefetch size (pages)                = 4
+ Number of containers                 = 1
+
+ Tablespace ID                        = 1
+ Name                                 = TEMPSPACE1
+ Type                                 = System managed space
+ Contents                             = System Temporary data
+ State                                = 0x0000
+   Detailed explanation:
+     Normal
+ Total pages                          = 1
+ Useable pages                        = 1
+ Used pages                           = 1
+ Free pages                           = Not applicable
+ High water mark (pages)              = Not applicable
+ Page size (bytes)                    = 8192
+ Extent size (pages)                  = 32
+ Prefetch size (pages)                = 32
+ Number of containers                 = 1
+
+ Tablespace ID                        = 2
+ Name                                 = USERSPACE1
+ Type                                 = Database managed space
+ Contents                             = All permanent data. Large table space.
+ State                                = 0x0020
+   Detailed explanation:
+     Backup pending
+ Total pages                          = 4096
+ Useable pages                        = 4064
+ Used pages                           = 1824
+ Free pages                           = 2240
+ High water mark (pages)              = 1824
+ Page size (bytes)                    = 8192
+ Extent size (pages)                  = 32
+ Prefetch size (pages)                = 32
+ Number of containers                 = 1
+ Minimum recovery time                = 2025-08-31-07.29.56.000000
+
+ Tablespace ID                        = 3
+ Name                                 = IBMDB2SAMPLEREL
+ Type                                 = Database managed space
+ Contents                             = All permanent data. Large table space.
+ State                                = 0x0000
+   Detailed explanation:
+     Normal
+ Total pages                          = 4096
+ Useable pages                        = 4064
+ Used pages                           = 672
+ Free pages                           = 3392
+ High water mark (pages)              = 672
+ Page size (bytes)                    = 8192
+ Extent size (pages)                  = 32
+ Prefetch size (pages)                = 32
+ Number of containers                 = 1
+ Minimum recovery time                = 2025-08-31-07.42.02.000000
+
+ Tablespace ID                        = 4
+ Name                                 = IBMDB2SAMPLEXML
+ Type                                 = Database managed space
+ Contents                             = All permanent data. Large table space.
+ State                                = 0x0000
+   Detailed explanation:
+     Normal
+ Total pages                          = 4096
+ Useable pages                        = 4064
+ Used pages                           = 1440
+ Free pages                           = 2624
+ High water mark (pages)              = 1440
+ Page size (bytes)                    = 8192
+ Extent size (pages)                  = 32
+ Prefetch size (pages)                = 32
+ Number of containers                 = 1
+
+ Tablespace ID                        = 5
+ Name                                 = SYSTOOLSPACE
+ Type                                 = Database managed space
+ Contents                             = All permanent data. Large table space.
+ State                                = 0x0000
+   Detailed explanation:
+     Normal
+ Total pages                          = 4096
+ Useable pages                        = 4092
+ Used pages                           = 104
+ Free pages                           = 3988
+ High water mark (pages)              = 104
+ Page size (bytes)                    = 8192
+ Extent size (pages)                  = 4
+ Prefetch size (pages)                = 4
+ Number of containers                 = 1
+ Minimum recovery time                = 2025-08-31-06.42.21.000000
+```
+
+</details>
+
+### Key Attributes Explained
+
+  * **`Tablespace ID`**: A unique numerical identifier for the tablespace.
+  * **`Name`**: The human-readable name of the tablespace.
+      * **`SYSCATSPACE`**: Stores the database's system catalog tables (metadata about all objects).
+      * **`TEMPSPACE1`**: Used for temporary data during operations like sorts, joins, or other complex queries. This data is not persistent.
+      * **`USERSPACE1`** and **`IBMDB2SAMPLEREL`**: These are the main user-defined tablespaces where your data tables (like `EMPLOYEE` and `SALES`) are stored.
+  * **`Type`**: The storage management method.
+      * **`Database managed space` (DMS)**: The DB2 database engine directly manages the storage containers (files or devices). This is the modern, recommended approach.
+      * **`System managed space` (SMS)**: The operating system's file system manages the containers. This is an older method with some limitations.
+  * **`Contents`**: Describes the type of data stored. `All permanent data` means it stores user tables and indexes.
+  * **`State`**: The most important attribute for troubleshooting. The state describes the current condition of the tablespace.
+      * **`Normal` (`0x0000`)**: The tablespace is fully functional and can be read from and written to.
+      * **`Backup pending` (`0x0020`)**: The tablespace is in a restrictive state because it has been restored from a backup but has not yet had a new backup taken. Writes are not allowed until a full backup is completed to ensure the database can be recovered in the event of a failure. This was the root cause of your initial `SQL0290N` error.
+  * **`Page size (bytes)`**: The fundamental unit of disk space used for data storage. It's like the size of a single sheet in a notebook. DB2 reads and writes data in chunks of this size. A larger page size can be more efficient for large rows but may waste space for small rows.
+  * **`Extent size (pages)`**: The number of pages that DB2 allocates at once when a tablespace needs more space. It's like a block of chapters in a book.
+  * **`Total pages`**, **`Useable pages`**, **`Used pages`**, **`Free pages`**: These metrics describe the current storage capacity and usage.
+  * **`High water mark (pages)`**: The highest number of pages ever used in this tablespace. It's a critical metric for capacity planning. Even if `Used pages` drops after data is deleted, the `High water mark` remains to show peak usage, and the tablespace won't shrink below this level automatically.
