@@ -291,7 +291,7 @@ Address            StartLSN         StartLSO             State      Size       P
 
 ### 1.3. Audit Logs
 
-Audit logs are not enabled by default and, like transaction logs, are stored in a proprietary binary format. The absence of files in the `/database/config/db2inst1/sqllib/security/auditdata/` directory confirms that auditing has not been activated.
+Audit logs are not enabled by default and, like transaction logs, are stored in a proprietary binary format. 
 
 To use auditing, you must first enable it and configure which audit events you want to track. The audit configuration is specific to the database instance.
 
@@ -444,6 +444,7 @@ As mentioned, transaction and audit logs are not in a human-readable format. Dir
   * **Audit Logs**: To use audit data, you must use the `db2audit extract` command. This command extracts the binary audit log files into delimited ASCII files. You could then set up an automated script to run this command periodically and have your log forwarding agent pick up the newly generated text files.
 
 For continuous, real-time ETL monitoring, a better approach than scraping logs is to use DB2's built-in monitoring functions and views, such as `MON_GET_WORKLOAD` or `MON_GET_ACTIVITY`, and collect metrics via an API. You can then use tools like Prometheus to scrape these metrics and send them to Grafana for a more performant and real-time dashboard. This is often preferred over log scraping for performance-centric tasks.
+
 
 
 
