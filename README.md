@@ -48,17 +48,6 @@ find / -type d -name sqllib 2>/dev/null
 
 ## Step 4: Check Databases
 
-List the databases in the directory:
-
-```bash
-db2 list db directory
-```
-
-Expected output should include:
-
-* `SAMPLE`
-* `TESTDB` (if DBNAME specified)
-
 Connect to the SAMPLE database:
 
 ```bash
