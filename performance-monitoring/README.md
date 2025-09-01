@@ -2,11 +2,11 @@
 
 This section outlines key concepts and practical methods for monitoring the performance of a DB2 database, with a focus on ETL workloads. This includes understanding the various types of logs DB2 generates and how to configure them for modern log aggregation platforms.
 
-### 1\. DB2 Log Types and Locations
+## 1\. DB2 Log Types and Locations
 
 In your DB2 container environment, you can directly interact with the logs to understand their purpose and format. Let's look at the key logs you'll encounter and how to access them.
 
-#### 1.1. Diagnostic Log (`db2diag.log`)
+### 1.1. Diagnostic Log (`db2diag.log`)
 
 The diagnostic log is the primary source for troubleshooting. You'll find it in a member-specific subdirectory of your instance's diagnostic path.
 
@@ -121,7 +121,7 @@ RETCODE : ZRC=0x8005006D=-2147155859=SQLE_CA_BUILT
 
 The output of the `tail` command will show a series of log entries, each starting with a standardized header that includes a timestamp, PID, and other key identifiers. This is the log file you would configure your log forwarding agent (e.g., Fluent Bit, Logstash) to monitor.
 
-#### 1.2. Transaction Logs (Recovery Logs)
+### 1.2. Transaction Logs (Recovery Logs)
 
 These logs are essential for data durability and recovery and are not human-readable. They are stored in a separate directory defined by the **`LOGPATH`** database configuration parameter.
 
@@ -444,5 +444,6 @@ As mentioned, transaction and audit logs are not in a human-readable format. Dir
   * **Audit Logs**: To use audit data, you must use the `db2audit extract` command. This command extracts the binary audit log files into delimited ASCII files. You could then set up an automated script to run this command periodically and have your log forwarding agent pick up the newly generated text files.
 
 For continuous, real-time ETL monitoring, a better approach than scraping logs is to use DB2's built-in monitoring functions and views, such as `MON_GET_WORKLOAD` or `MON_GET_ACTIVITY`, and collect metrics via an API. You can then use tools like Prometheus to scrape these metrics and send them to Grafana for a more performant and real-time dashboard. This is often preferred over log scraping for performance-centric tasks.
+
 
 
