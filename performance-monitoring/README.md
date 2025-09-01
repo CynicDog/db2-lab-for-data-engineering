@@ -309,7 +309,7 @@ To start auditing, use the `db2audit configure` command to set auditing on and s
 
 This command enables the auditing feature. However, you haven't specified which events to capture yet.
 
-Now, set the specific audit events for the database instance. 
+Now, set the specific audit events for the database instance.
 
 ```bash
 [db2inst1@2e62336d93c9 ~]$ db2 "CREATE AUDIT POLICY LOGALL CATEGORIES ALL STATUS BOTH ERROR TYPE AUDIT"
@@ -343,13 +343,70 @@ As these logs are generated, you should periodically archive the logs so that th
 ```bash
 [db2inst1@2e62336d93c9 ~]$ ls auditlogs/
 db2audit.db.SAMPLE.log.0
-
 [db2inst1@2e62336d93c9 ~]$ db2 "CALL SYSPROC.AUDIT_ARCHIVE(NULL, NULL)"
 [db2inst1@2e62336d93c9 ~]$ ls archive
 db2audit.db.SAMPLE.log.0.20250901050358
 ```
 
-... TODO 
+The first `ls` command shows the active audit log file, a binary file that's not human-readable. The `db2 "CALL SYSPROC.AUDIT_ARCHIVE(NULL, NULL)"` command is a crucial step. It instructs DB2 to **archive** the currently active audit log file. This process closes the current log and moves it to the specified `archivepath` with a unique timestamp, making it ready for extraction. The final `ls` command confirms the successful archiving, showing the timestamped file.
+
+```
+[db2inst1@2e62336d93c9 ~]$ db2audit extract file /tmp/audit.out from files /database/config/db2inst1/archive/db2audit.db.SAMPLE.log.0.20250901050358
+
+AUD0000I  Operation succeeded.
+```
+
+After archiving, you can use the **`db2audit extract`** utility to convert the binary log into a readable format. This command is a key part of the workflow. The `file /tmp/audit.out` parameter specifies the output file for the human-readable data, and the `from files` parameter points to the specific archived log file to be processed. The successful `AUD0000I` message confirms that the binary data has been extracted and converted, making it available for viewing, analysis, or ingestion by other monitoring tools.
+
+<details><summary>Examples</summary>
+
+```
+[db2inst1@2e62336d93c9 ~]$ cat /tmp/audit.out
+
+timestamp=2025-09-01-04.59.54.866271;
+  category=CONTEXT;
+  audit event=EXECUTE_IMMEDIATE;
+  event correlator=7;
+  database=SAMPLE;
+  userid=db2inst1;
+  authid=DB2INST1;
+  application id=*LOCAL.db2inst1.250901045238;
+  application name=db2bp;
+  package schema=NULLID;
+  package name=SQLC2P31;
+  package section=203;
+  text=CREATE AUDIT POLICY LOGALL CATEGORIES ALL STATUS BOTH ERROR TYPE
+AUDIT;
+  local transaction id=0x2802000000000000;
+  global transaction id=0x0000000000000000000000000000000000000000;
+  instance name=db2inst1;
+  hostname=2e62336d93c9;
+
+timestamp=2025-09-01-04.59.54.873608;
+  category=CHECKING;
+  audit event=CHECKING_OBJECT;
+  event correlator=7;
+  event status=0;
+  database=SAMPLE;
+  userid=db2inst1;
+  authid=DB2INST1;
+  application id=*LOCAL.db2inst1.250901045238;
+  application name=db2bp;
+  package schema=NULLID;
+  package name=SQLC2P31;
+  package section=0;
+  object name=LOGALL;
+  object type=AUDIT_POLICY;
+  access approval reason=SECADM;
+  access attempted=CREATE;
+  local transaction id=0x2802000000000000;
+  global transaction id=0x0000000000000000000000000000000000000000;
+  instance name=db2inst1;
+  hostname=2e62336d93c9;
+  access control manager=INTERNAL;
+```
+
+</details>
 
 ### 2\. Log Configuration and Modern Integration
 
@@ -387,3 +444,4 @@ As mentioned, transaction and audit logs are not in a human-readable format. Dir
   * **Audit Logs**: To use audit data, you must use the `db2audit extract` command. This command extracts the binary audit log files into delimited ASCII files. You could then set up an automated script to run this command periodically and have your log forwarding agent pick up the newly generated text files.
 
 For continuous, real-time ETL monitoring, a better approach than scraping logs is to use DB2's built-in monitoring functions and views, such as `MON_GET_WORKLOAD` or `MON_GET_ACTIVITY`, and collect metrics via an API. You can then use tools like Prometheus to scrape these metrics and send them to Grafana for a more performant and real-time dashboard. This is often preferred over log scraping for performance-centric tasks.
+
