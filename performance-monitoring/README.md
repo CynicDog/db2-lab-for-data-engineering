@@ -696,27 +696,6 @@ You can now inspect the captured events (including SQL statements like `SELECT *
  
 </details>
 
-### 1.5. Performance Monitor Logs
-
-Performance monitor logs provide insights into database health, resource consumption, and workload distribution. They are typically accessed through **Db2 snapshot monitors**, **`db2pd`**, or the **MON\_GET** monitoring interfaces.
-
-Some key methods include:
-
-* **`db2pd` utility**: Provides real-time diagnostic data about memory, locking, and logging.
-
-  ```bash
-  db2pd -db sample -logs
-  db2pd -db sample -locks
-  ```
-
-* **`MON_GET` table functions**: Queryable system views that expose metrics for CPU usage, I/O, buffer pools, and workloads.
-
-  ```bash
-  db2 "SELECT substr(workload_name,1,20) AS workload, total_cpu_time, total_act_time FROM TABLE(MON_GET_WORKLOAD(NULL,-2)) as t"
-  ```
-
-* **Performance Event Monitors**: Can be configured to write metrics to files or tables for longer-term analysis.
-
 ### 2\. Log Configuration and Modern Integration
 
 Configuring DB2's logging for external systems like Splunk, Loki, and Grafana primarily involves managing the diagnostic log, as it's the only one in a readily parsable, plain-text format.
@@ -753,6 +732,7 @@ As mentioned, transaction and audit logs are not in a human-readable format. Dir
   * **Audit Logs**: To use audit data, you must use the `db2audit extract` command. This command extracts the binary audit log files into delimited ASCII files. You could then set up an automated script to run this command periodically and have your log forwarding agent pick up the newly generated text files.
 
 For continuous, real-time ETL monitoring, a better approach than scraping logs is to use DB2's built-in monitoring functions and views, such as `MON_GET_WORKLOAD` or `MON_GET_ACTIVITY`, and collect metrics via an API. You can then use tools like Prometheus to scrape these metrics and send them to Grafana for a more performant and real-time dashboard. This is often preferred over log scraping for performance-centric tasks.
+
 
 
 
