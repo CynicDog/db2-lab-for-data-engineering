@@ -1,0 +1,56 @@
+services:
+  db2:
+    image: ibmcom/db2
+    platform: linux/amd64
+    container_name: db2
+    privileged: true
+    environment:
+      - LICENSE=accept
+      - DB2INST1_PASSWORD=db2inst1_password
+      - SAMPLEDB=true
+    volumes:
+      - db2:/database
+    ports:
+      - "50000:50000"
+    command: >
+      bash -c "
+        su - db2inst1 -c '. /database/config/db2inst1/sqllib/db2profile && 
+        db2 connect to SAMPLE &&
+        tail -f /dev/null'
+      "
+    healthcheck: 
+      test: ["CMD-SHELL", "su - db2inst1 -c '. /database/config/db2inst1/sqllib/db2profile && db2 connect to SAMPLE && db2 list active databases >/dev/null' || exit 1"] 
+      interval: 30s 
+      timeout: 10s 
+      retries: 10 
+      start_period: 120s
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: fluent-bit
+    depends_on: 
+      db2: 
+        condition: service_healthy
+    volumes:
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - db2:/database:ro
+    
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    depends_on:
+      - fluent-bit
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+
+volumes:
+  db2:
