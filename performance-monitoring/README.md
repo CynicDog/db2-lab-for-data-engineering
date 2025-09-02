@@ -408,6 +408,315 @@ timestamp=2025-09-01-04.59.54.873608;
 
 </details>
 
+### 1.4. Activity Event Logs
+
+Activity event logs capture detailed information about SQL activities within the database, including query execution and performance metrics. Unlike `db2diag.log`, these logs are **not generated automatically**; they require creating **event monitors**.
+
+Event monitors can track various database activities, such as:
+
+* SQL statement execution
+* Transactions
+* Locking events
+* Deadlocks
+
+For example, to create an activity event monitor that logs all SQL statement activity to files:
+
+```bash
+db2 "
+CREATE EVENT MONITOR actevmon
+FOR ACTIVITIES
+WRITE TO FILE '/database/config/db2inst1/logs'
+MAXFILES 5
+MAXFILESIZE 10000
+"
+db2 "ALTER WORKLOAD SYSDEFAULTUSERWORKLOAD COLLECT ACTIVITY DATA ON COORDINATOR WITH DETAILS"
+db2 "SET EVENT MONITOR actevmon STATE=1"
+```
+
+* `ALTER WORKLOAD ... ON COORDINATOR WITH DETAILS` is **required** to enable detailed activity collection for the default workload.
+* `SET EVENT MONITOR ... STATE=1` starts capturing activities.
+
+Once enabled, Db2 will begin recording SQL activity data. You can then **analyze workloads**, identify long-running queries, or detect performance bottlenecks.
+
+#### Viewing the Logs
+
+The event monitor writes binary files to the specified directory, for example:
+
+```
+/database/config/db2inst1/logs/00000000.evt
+/database/config/db2inst1/logs/db2event.ctl
+```
+
+* `.evt` – contains captured event data.
+* `.ctl` – the control file that manages file rotation for the event monitor.
+
+To convert these binary logs into a human-readable format:
+
+```bash
+db2evmon -path /database/config/db2inst1/logs > /database/config/db2inst1/logs/actevmon_readable.log
+```
+
+You can now inspect the captured events (including SQL statements like `SELECT * FROM EMPLOYEE`) in plain text.
+
+<details><summary>Examples</summary>
+
+```
+13) Activity ...
+  Activity ID                        : 1
+  Activity Secondary ID              : 0
+  Appl Handle                        : 230
+  UOW ID                             : 16
+  Service Superclass Name            : SYSDEFAULTUSERCLASS
+  Service Subclass Name              : SYSDEFAULTSUBCLASS
+  Tenant ID                          : 0
+  Tenant Name                        : SYSTEM
+
+  Activity Type                      : READ_DML
+  Parent Activity ID                 : 0
+  Parent UOW ID                      : 0
+  Coordinating Partition             : 0
+  Workload ID                        : 1
+  Workload Occurrence ID             : 1
+  Database Work Action Set ID        : 0
+  Database Work Class ID             : 0
+  Service Class Work Action Set ID   : 0
+  Service Class Work Class ID        : 0
+  Workload Work Action Set ID        : 0
+  Workload Work Class ID             : 0
+  Time Created                       : 09/02/2025 01:53:55.375998
+  Time Started                       : 09/02/2025 01:53:55.376011
+  Time Completed                     : 09/02/2025 01:53:55.404502
+  Event Timestamp                    : 09/02/2025 01:53:55.404521
+  Time Created at Coordinator Member : 09/02/2025 01:53:55.375998
+  Activity captured while in progress: FALSE
+
+  Application ID                     : *LOCAL.db2inst1.250902014044
+  Application Name                   : db2bp
+  Session Auth ID                    : DB2INST1
+  Client Userid                      : 
+  Client Workstation Name            : 
+  Client Applname                    : 
+  Client Accounting String           : 
+  Address                            : 
+  SQLCA:
+   sqlcode: 0
+   sqlstate: 00000
+
+  Query Cost Estimate     : 7
+  Query Card Estimate     : 16
+  Execution time          : 0.022552 seconds
+  Rows Returned           : 4
+  Query Actual Degree     : 1
+  Effective Query Degree  : 1
+
+  Prep time: 20
+
+  Number of remaps: 0
+
+  Total stats fabrication time: 0
+
+  Total stats fabrications: 0
+
+  Total sync runstats time: 0
+
+  Total sync runstats: 0
+  Monitoring Interval ID  : 0
+  Query Data Tag List     : 
+  Active Hash Group Bys Top               : 0
+  Active Hash Joins Top                   : 0
+  Active OLAP Functions Top               : 0
+  Active Partial Early Aggregations Top   : 0
+  Active Partial Early Distincts Top      : 0
+  Active Sort Consumers Top               : 0
+  Active Sorts Top                        : 0
+  Active Columnar Vector Consumers Top    : 0
+  Sort Consumer Heap Top                  : 0
+  Sort Consumer Shared Heap Top           : 0
+  Sort Heap Top                           : 0
+  Sort Shared Heap Top                    : 0
+  Admission Control Bypassed              : TRUE
+  Estimated Sort Shared Heap Top          : 0
+  Estimated Sort Consumers Top            : 0
+  Estimated Runtime                       : 15
+  Admission Resource Actuals              : N
+  Agents Top                              : 0
+  Session Priority                        : MEDIUM
+  Details XML             : <activity_metrics xmlns="http://www.ibm.com/xmlns/prod/db2/mon" release="11050800"><wlm_queue_time_total>0</wlm_queue_time_total><wlm_queue_assignments_total>0</wlm_queue_assignments_total><fcm_tq_recv_wait_time>0</fcm_tq_recv_wait_time><fcm_message_recv_wait_time>0</fcm_message_recv_wait_time><fcm_tq_send_wait_time>0</fcm_tq_send_wait_time><fcm_message_send_wait_time>0</fcm_message_send_wait_time><lock_wait_time>0</lock_wait_time><lock_waits>0</lock_waits><direct_read_time>0</direct_read_time><direct_read_reqs>0</direct_read_reqs><direct_write_time>0</direct_write_time><direct_write_reqs>0</direct_write_reqs><log_buffer_wait_time>0</log_buffer_wait_time><num_log_buffer_full>0</num_log_buffer_full><log_disk_wait_time>0</log_disk_wait_time><log_disk_waits_total>0</log_disk_waits_total><pool_write_time>0</pool_write_time><pool_read_time>2</pool_read_time><audit_file_write_wait_time>0</audit_file_write_wait_time><audit_file_writes_total>0</audit_file_writes_total><audit_subsystem_wait_time>0</audit_subsystem_wait_time><audit_subsystem_waits_total>0</audit_subsystem_waits_total><diaglog_write_wait_time>0</diaglog_write_wait_time><diaglog_writes_total>0</diaglog_writes_total><fcm_send_wait_time>0</fcm_send_wait_time><fcm_recv_wait_time>0</fcm_recv_wait_time><total_act_wait_time>2</total_act_wait_time><total_section_sort_proc_time>0</total_section_sort_proc_time><total_section_sort_time>0</total_section_sort_time><total_section_sorts>0</total_section_sorts><total_act_time>23</total_act_time><rows_read>15</rows_read><rows_modified>0</rows_modified><pool_data_l_reads>16</pool_data_l_reads><pool_index_l_reads>25</pool_index_l_reads><pool_temp_data_l_reads>0</pool_temp_data_l_reads><pool_temp_index_l_reads>0</pool_temp_index_l_reads><pool_xda_l_reads>12</pool_xda_l_reads><pool_temp_xda_l_reads>0</pool_temp_xda_l_reads><total_cpu_time>18192</total_cpu_time><pool_data_p_reads>2</pool_data_p_reads><pool_temp_data_p_reads>0</pool_temp_data_p_reads><pool_xda_p_reads>1</pool_xda_p_reads><pool_temp_xda_p_reads>0</pool_temp_xda_p_reads><pool_index_p_reads>7</pool_index_p_reads><pool_temp_index_p_reads>0</pool_temp_index_p_reads><pool_data_writes>0</pool_data_writes><pool_xda_writes>0</pool_xda_writes><pool_index_writes>0</pool_index_writes><direct_reads>0</direct_reads><direct_writes>0</direct_writes><rows_returned>4</rows_returned><deadlocks>0</deadlocks><lock_timeouts>0</lock_timeouts><lock_escals>0</lock_escals><fcm_sends_total>0</fcm_sends_total><fcm_recvs_total>0</fcm_recvs_total><fcm_send_volume>0</fcm_send_volume><fcm_recv_volume>0</fcm_recv_volume><fcm_message_sends_total>0</fcm_message_sends_total><fcm_message_recvs_total>0</fcm_message_recvs_total><fcm_message_send_volume>0</fcm_message_send_volume><fcm_message_recv_volume>0</fcm_message_recv_volume><fcm_tq_sends_total>0</fcm_tq_sends_total><fcm_tq_recvs_total>0</fcm_tq_recvs_total><fcm_tq_send_volume>0</fcm_tq_send_volume><fcm_tq_recv_volume>0</fcm_tq_recv_volume><tq_tot_send_spills>0</tq_tot_send_spills><post_threshold_sorts>0</post_threshold_sorts><post_shrthreshold_sorts>0</post_shrthreshold_sorts><sort_overflows>0</sort_overflows><audit_events_total>0</audit_events_total><total_sorts>0</total_sorts><stmt_exec_time>23</stmt_exec_time><coord_stmt_exec_time>23</coord_stmt_exec_time><total_routine_non_sect_proc_time>0</total_routine_non_sect_proc_time><total_routine_non_sect_time>0</total_routine_non_sect_time><total_section_proc_time>20</total_section_proc_time><total_section_time>23</total_section_time><total_app_section_executions>1</total_app_section_executions><total_routine_user_code_proc_time>0</total_routine_user_code_proc_time><total_routine_user_code_time>0</total_routine_user_code_time><total_routine_time>0</total_routine_time><thresh_violations>0</thresh_violations><num_lw_thresh_exceeded>0</num_lw_thresh_exceeded><total_routine_invocations>0</total_routine_invocations><lock_wait_time_global>0</lock_wait_time_global><lock_waits_global>0</lock_waits_global><reclaim_wait_time>0</reclaim_wait_time><spacemappage_reclaim_wait_time>0</spacemappage_reclaim_wait_time><lock_timeouts_global>0</lock_timeouts_global><lock_escals_maxlocks>0</lock_escals_maxlocks><lock_escals_locklist>0</lock_escals_locklist><lock_escals_global>0</lock_escals_global><cf_wait_time>0</cf_wait_time><cf_waits>0</cf_waits><pool_data_gbp_l_reads>0</pool_data_gbp_l_reads><pool_data_gbp_p_reads>0</pool_data_gbp_p_reads><pool_data_lbp_pages_found>14</pool_data_lbp_pages_found><pool_data_gbp_invalid_pages>0</pool_data_gbp_invalid_pages><pool_index_gbp_l_reads>0</pool_index_gbp_l_reads><pool_index_gbp_p_reads>0</pool_index_gbp_p_reads><pool_index_lbp_pages_found>18</pool_index_lbp_pages_found><pool_index_gbp_invalid_pages>0</pool_index_gbp_invalid_pages><pool_xda_gbp_l_reads>0</pool_xda_gbp_l_reads><pool_xda_gbp_p_reads>0</pool_xda_gbp_p_reads><pool_xda_lbp_pages_found>11</pool_xda_lbp_pages_found><pool_xda_gbp_invalid_pages>0</pool_xda_gbp_invalid_pages><evmon_wait_time>0</evmon_wait_time><evmon_waits_total>0</evmon_waits_total><total_extended_latch_wait_time>0</total_extended_latch_wait_time><total_extended_latch_waits>0</total_extended_latch_waits><total_disp_run_queue_time>0</total_disp_run_queue_time><pool_queued_async_data_reqs>0</pool_queued_async_data_reqs><pool_queued_async_index_reqs>0</pool_queued_async_index_reqs><pool_queued_async_xda_reqs>0</pool_queued_async_xda_reqs><pool_queued_async_temp_data_reqs>0</pool_queued_async_temp_data_reqs><pool_queued_async_temp_index_reqs>0</pool_queued_async_temp_index_reqs><pool_queued_async_temp_xda_reqs>0</pool_queued_async_temp_xda_reqs><pool_queued_async_other_reqs>0</pool_queued_async_other_reqs><pool_queued_async_data_pages>0</pool_queued_async_data_pages><pool_queued_async_index_pages>0</pool_queued_async_index_pages><pool_queued_async_xda_pages>0</pool_queued_async_xda_pages><pool_queued_async_temp_data_pages>0</pool_queued_async_temp_data_pages><pool_queued_async_temp_index_pages>0</pool_queued_async_temp_index_pages><pool_queued_async_temp_xda_pages>0</pool_queued_async_temp_xda_pages><pool_failed_async_data_reqs>0</pool_failed_async_data_reqs><pool_failed_async_index_reqs>0</pool_failed_async_index_reqs><pool_failed_async_xda_reqs>0</pool_failed_async_xda_reqs><pool_failed_async_temp_data_reqs>0</pool_failed_async_temp_data_reqs><pool_failed_async_temp_index_reqs>0</pool_failed_async_temp_index_reqs><pool_failed_async_temp_xda_reqs>0</pool_failed_async_temp_xda_reqs><pool_failed_async_other_reqs>0</pool_failed_async_other_reqs><total_peds>0</total_peds><disabled_peds>0</disabled_peds><post_threshold_peds>0</post_threshold_peds><total_peas>0</total_peas><post_threshold_peas>0</post_threshold_peas><tq_sort_heap_requests>0</tq_sort_heap_requests><tq_sort_heap_rejections>0</tq_sort_heap_rejections><prefetch_wait_time>0</prefetch_wait_time><prefetch_waits>0</prefetch_waits><pool_data_gbp_indep_pages_found_in_lbp>14</pool_data_gbp_indep_pages_found_in_lbp><pool_index_gbp_indep_pages_found_in_lbp>18</pool_index_gbp_indep_pages_found_in_lbp><pool_xda_gbp_indep_pages_found_in_lbp>11</pool_xda_gbp_indep_pages_found_in_lbp><fcm_tq_recv_waits_total>0</fcm_tq_recv_waits_total><fcm_message_recv_waits_total>0</fcm_message_recv_waits_total><fcm_tq_send_waits_total>0</fcm_tq_send_waits_total><fcm_message_send_waits_total>0</fcm_message_send_waits_total><fcm_send_waits_total>0</fcm_send_waits_total><fcm_recv_waits_total>0</fcm_recv_waits_total><ida_send_wait_time>0</ida_send_wait_time><ida_sends_total>0</ida_sends_total><ida_send_volume>0</ida_send_volume><ida_recv_wait_time>0</ida_recv_wait_time><ida_recvs_total>0</ida_recvs_total><ida_recv_volume>0</ida_recv_volume><rows_deleted>0</rows_deleted><rows_inserted>0</rows_inserted><rows_updated>0</rows_updated><total_hash_joins>0</total_hash_joins><total_hash_loops>0</total_hash_loops><hash_join_overflows>0</hash_join_overflows><hash_join_small_overflows>0</hash_join_small_overflows><post_shrthreshold_hash_joins>0</post_shrthreshold_hash_joins><total_olap_funcs>0</total_olap_funcs><olap_func_overflows>0</olap_func_overflows><int_rows_deleted>0</int_rows_deleted><int_rows_inserted>0</int_rows_inserted><int_rows_updated>0</int_rows_updated><comm_exit_wait_time>0</comm_exit_wait_time><comm_exit_waits>0</comm_exit_waits><pool_col_l_reads>0</pool_col_l_reads><pool_temp_col_l_reads>0</pool_temp_col_l_reads><pool_col_p_reads>0</pool_col_p_reads><pool_temp_col_p_reads>0</pool_temp_col_p_reads><pool_col_lbp_pages_found>0</pool_col_lbp_pages_found><pool_col_writes>0</pool_col_writes><pool_col_gbp_l_reads>0</pool_col_gbp_l_reads><pool_col_gbp_p_reads>0</pool_col_gbp_p_reads><pool_col_gbp_invalid_pages>0</pool_col_gbp_invalid_pages><pool_col_gbp_indep_pages_found_in_lbp>0</pool_col_gbp_indep_pages_found_in_lbp><pool_queued_async_col_reqs>0</pool_queued_async_col_reqs><pool_queued_async_temp_col_reqs>0</pool_queued_async_temp_col_reqs><pool_queued_async_col_pages>0</pool_queued_async_col_pages><pool_queued_async_temp_col_pages>0</pool_queued_async_temp_col_pages><pool_failed_async_col_reqs>0</pool_failed_async_col_reqs><pool_failed_async_temp_col_reqs>0</pool_failed_async_temp_col_reqs><total_col_proc_time>0</total_col_proc_time><total_col_time>0</total_col_time><total_col_executions>0</total_col_executions><post_threshold_hash_joins>0</post_threshold_hash_joins><pool_caching_tier_page_read_time>0</pool_caching_tier_page_read_time><pool_caching_tier_page_write_time>0</pool_caching_tier_page_write_time><pool_data_caching_tier_l_reads>0</pool_data_caching_tier_l_reads><pool_index_caching_tier_l_reads>0</pool_index_caching_tier_l_reads><pool_xda_caching_tier_l_reads>0</pool_xda_caching_tier_l_reads><pool_col_caching_tier_l_reads>0</pool_col_caching_tier_l_reads><pool_data_caching_tier_page_writes>0</pool_data_caching_tier_page_writes><pool_index_caching_tier_page_writes>0</pool_index_caching_tier_page_writes><pool_xda_caching_tier_page_writes>0</pool_xda_caching_tier_page_writes><pool_col_caching_tier_page_writes>0</pool_col_caching_tier_page_writes><pool_data_caching_tier_page_updates>0</pool_data_caching_tier_page_updates><pool_index_caching_tier_page_updates>0</pool_index_caching_tier_page_updates><pool_xda_caching_tier_page_updates>0</pool_xda_caching_tier_page_updates><pool_col_caching_tier_page_updates>0</pool_col_caching_tier_page_updates><pool_data_caching_tier_pages_found>0</pool_data_caching_tier_pages_found><pool_index_caching_tier_pages_found>0</pool_index_caching_tier_pages_found><pool_xda_caching_tier_pages_found>0</pool_xda_caching_tier_pages_found><pool_col_caching_tier_pages_found>0</pool_col_caching_tier_pages_found><pool_data_caching_tier_gbp_invalid_pages>0</pool_data_caching_tier_gbp_invalid_pages><pool_index_caching_tier_gbp_invalid_pages>0</pool_index_caching_tier_gbp_invalid_pages><pool_xda_caching_tier_gbp_invalid_pages>0</pool_xda_caching_tier_gbp_invalid_pages><pool_col_caching_tier_gbp_invalid_pages>0</pool_col_caching_tier_gbp_invalid_pages><pool_data_caching_tier_gbp_indep_pages_found>0</pool_data_caching_tier_gbp_indep_pages_found><pool_index_caching_tier_gbp_indep_pages_found>0</pool_index_caching_tier_gbp_indep_pages_found><pool_xda_caching_tier_gbp_indep_pages_found>0</pool_xda_caching_tier_gbp_indep_pages_found><pool_col_caching_tier_gbp_indep_pages_found>0</pool_col_caching_tier_gbp_indep_pages_found><total_hash_grpbys>0</total_hash_grpbys><hash_grpby_overflows>0</hash_grpby_overflows><post_threshold_hash_grpbys>0</post_threshold_hash_grpbys><post_threshold_olap_funcs>0</post_threshold_olap_funcs><post_threshold_col_vector_consumers>0</post_threshold_col_vector_consumers><total_col_vector_consumers>0</total_col_vector_consumers><total_index_build_proc_time>0</total_index_build_proc_time><total_index_build_time>0</total_index_build_time><total_indexes_built>0</total_indexes_built><ext_table_recv_wait_time>0</ext_table_recv_wait_time><ext_table_recvs_total>0</ext_table_recvs_total><ext_table_recv_volume>0</ext_table_recv_volume><ext_table_read_volume>0</ext_table_read_volume><ext_table_send_wait_time>0</ext_table_send_wait_time><ext_table_sends_total>0</ext_table_sends_total><ext_table_send_volume>0</ext_table_send_volume><ext_table_write_volume>0</ext_table_write_volume><col_vector_consumer_overflows>0</col_vector_consumer_overflows><total_col_synopsis_proc_time>0</total_col_synopsis_proc_time><total_col_synopsis_time>0</total_col_synopsis_time><total_col_synopsis_executions>0</total_col_synopsis_executions><col_synopsis_rows_inserted>0</col_synopsis_rows_inserted><lob_prefetch_wait_time>0</lob_prefetch_wait_time><lob_prefetch_reqs>0</lob_prefetch_reqs><fed_rows_deleted>0</fed_rows_deleted><fed_rows_inserted>0</fed_rows_inserted><fed_rows_updated>0</fed_rows_updated><fed_rows_read>0</fed_rows_read><fed_wait_time>0</fed_wait_time><fed_waits_total>0</fed_waits_total><adm_overflows>0</adm_overflows><adm_bypass_act_total>1</adm_bypass_act_total></activity_metrics>
+
+14) Activity Statement ...
+  Activity ID             : 1
+  Activity Secondary ID   : 0
+  Application Handle      : 230
+  Application ID          : *LOCAL.db2inst1.250902014044
+  UOW ID                  : 16
+
+  Lock timeout value      : -1
+  Query ID                : 0
+  Package cache ID        : 755914244097
+  Statement ID            : 251915520388123288
+  Plan ID                 : -7817454051307235939
+  Semantic Env ID         : 4836717360601346174
+  Package creator         : NULLID  
+  Package name            : SQLC2P31
+  Package version         : 
+  Section No              : 201
+  Statement No            : 1
+  Num Routines            : 0
+  Executable ID           : 0x0100000000000000210000000000000000000000020020250902015355375630
+  Type                    : Dynamic
+  Nesting level of stmt   : 0
+  Source ID               : 0
+  Invocation ID           : 0
+  Routine ID              : 0
+  Isolation level         : Cursor Stability
+  Statement text          : select * from PRODUCT
+  Effective statement text : 
+
+  Stmt first use time     : 09/02/2025 01:53:55.375998
+  Stmt last use time      : 09/02/2025 01:53:55.403650
+  Event Timestamp                    : 09/02/2025 01:53:55.404521
+  Time Created at Coordinator Member : 09/02/2025 01:53:55.375998
+
+15) Activity ...
+  Activity ID                        : 1
+  Activity Secondary ID              : 0
+  Appl Handle                        : 230
+  UOW ID                             : 17
+  Service Superclass Name            : SYSDEFAULTUSERCLASS
+  Service Subclass Name              : SYSDEFAULTSUBCLASS
+  Tenant ID                          : 0
+  Tenant Name                        : SYSTEM
+
+  Activity Type                      : READ_DML
+  Parent Activity ID                 : 0
+  Parent UOW ID                      : 0
+  Coordinating Partition             : 0
+  Workload ID                        : 1
+  Workload Occurrence ID             : 1
+  Database Work Action Set ID        : 0
+  Database Work Class ID             : 0
+  Service Class Work Action Set ID   : 0
+  Service Class Work Class ID        : 0
+  Workload Work Action Set ID        : 0
+  Workload Work Class ID             : 0
+  Time Created                       : 09/02/2025 01:55:03.184177
+  Time Started                       : 09/02/2025 01:55:03.184271
+  Time Completed                     : 09/02/2025 01:55:03.191096
+  Event Timestamp                    : 09/02/2025 01:55:03.191242
+  Time Created at Coordinator Member : 09/02/2025 01:55:03.184177
+  Activity captured while in progress: FALSE
+
+  Application ID                     : *LOCAL.db2inst1.250902014044
+  Application Name                   : db2bp
+  Session Auth ID                    : DB2INST1
+  Client Userid                      : 
+  Client Workstation Name            : 
+  Client Applname                    : 
+  Client Accounting String           : 
+  Address                            : 
+  SQLCA:
+   sqlcode: 0
+   sqlstate: 00000
+
+  Query Cost Estimate     : 7
+  Query Card Estimate     : 13
+  Execution time          : 0.002542 seconds
+  Rows Returned           : 6
+  Query Actual Degree     : 1
+  Effective Query Degree  : 1
+
+  Prep time: 16
+
+  Number of remaps: 0
+
+  Total stats fabrication time: 0
+
+  Total stats fabrications: 0
+
+  Total sync runstats time: 0
+
+  Total sync runstats: 0
+  Monitoring Interval ID  : 0
+  Query Data Tag List     : 
+  Active Hash Group Bys Top               : 0
+  Active Hash Joins Top                   : 0
+  Active OLAP Functions Top               : 0
+  Active Partial Early Aggregations Top   : 0
+  Active Partial Early Distincts Top      : 0
+  Active Sort Consumers Top               : 0
+  Active Sorts Top                        : 0
+  Active Columnar Vector Consumers Top    : 0
+  Sort Consumer Heap Top                  : 0
+  Sort Consumer Shared Heap Top           : 0
+  Sort Heap Top                           : 0
+  Sort Shared Heap Top                    : 0
+  Admission Control Bypassed              : TRUE
+  Estimated Sort Shared Heap Top          : 0
+  Estimated Sort Consumers Top            : 0
+  Estimated Runtime                       : 14
+  Admission Resource Actuals              : N
+  Agents Top                              : 0
+  Session Priority                        : MEDIUM
+  Details XML             : <activity_metrics xmlns="http://www.ibm.com/xmlns/prod/db2/mon" release="11050800"><wlm_queue_time_total>0</wlm_queue_time_total><wlm_queue_assignments_total>0</wlm_queue_assignments_total><fcm_tq_recv_wait_time>0</fcm_tq_recv_wait_time><fcm_message_recv_wait_time>0</fcm_message_recv_wait_time><fcm_tq_send_wait_time>0</fcm_tq_send_wait_time><fcm_message_send_wait_time>0</fcm_message_send_wait_time><lock_wait_time>0</lock_wait_time><lock_waits>0</lock_waits><direct_read_time>0</direct_read_time><direct_read_reqs>0</direct_read_reqs><direct_write_time>0</direct_write_time><direct_write_reqs>0</direct_write_reqs><log_buffer_wait_time>0</log_buffer_wait_time><num_log_buffer_full>0</num_log_buffer_full><log_disk_wait_time>0</log_disk_wait_time><log_disk_waits_total>0</log_disk_waits_total><pool_write_time>0</pool_write_time><pool_read_time>1</pool_read_time><audit_file_write_wait_time>0</audit_file_write_wait_time><audit_file_writes_total>0</audit_file_writes_total><audit_subsystem_wait_time>0</audit_subsystem_wait_time><audit_subsystem_waits_total>0</audit_subsystem_waits_total><diaglog_write_wait_time>0</diaglog_write_wait_time><diaglog_writes_total>0</diaglog_writes_total><fcm_send_wait_time>0</fcm_send_wait_time><fcm_recv_wait_time>0</fcm_recv_wait_time><total_act_wait_time>1</total_act_wait_time><total_section_sort_proc_time>0</total_section_sort_proc_time><total_section_sort_time>0</total_section_sort_time><total_section_sorts>0</total_section_sorts><total_act_time>3</total_act_time><rows_read>17</rows_read><rows_modified>0</rows_modified><pool_data_l_reads>12</pool_data_l_reads><pool_index_l_reads>17</pool_index_l_reads><pool_temp_data_l_reads>0</pool_temp_data_l_reads><pool_temp_index_l_reads>0</pool_temp_index_l_reads><pool_xda_l_reads>18</pool_xda_l_reads><pool_temp_xda_l_reads>0</pool_temp_xda_l_reads><total_cpu_time>1944</total_cpu_time><pool_data_p_reads>0</pool_data_p_reads><pool_temp_data_p_reads>0</pool_temp_data_p_reads><pool_xda_p_reads>1</pool_xda_p_reads><pool_temp_xda_p_reads>0</pool_temp_xda_p_reads><pool_index_p_reads>0</pool_index_p_reads><pool_temp_index_p_reads>0</pool_temp_index_p_reads><pool_data_writes>0</pool_data_writes><pool_xda_writes>0</pool_xda_writes><pool_index_writes>0</pool_index_writes><direct_reads>0</direct_reads><direct_writes>0</direct_writes><rows_returned>6</rows_returned><deadlocks>0</deadlocks><lock_timeouts>0</lock_timeouts><lock_escals>0</lock_escals><fcm_sends_total>0</fcm_sends_total><fcm_recvs_total>0</fcm_recvs_total><fcm_send_volume>0</fcm_send_volume><fcm_recv_volume>0</fcm_recv_volume><fcm_message_sends_total>0</fcm_message_sends_total><fcm_message_recvs_total>0</fcm_message_recvs_total><fcm_message_send_volume>0</fcm_message_send_volume><fcm_message_recv_volume>0</fcm_message_recv_volume><fcm_tq_sends_total>0</fcm_tq_sends_total><fcm_tq_recvs_total>0</fcm_tq_recvs_total><fcm_tq_send_volume>0</fcm_tq_send_volume><fcm_tq_recv_volume>0</fcm_tq_recv_volume><tq_tot_send_spills>0</tq_tot_send_spills><post_threshold_sorts>0</post_threshold_sorts><post_shrthreshold_sorts>0</post_shrthreshold_sorts><sort_overflows>0</sort_overflows><audit_events_total>0</audit_events_total><total_sorts>0</total_sorts><stmt_exec_time>3</stmt_exec_time><coord_stmt_exec_time>3</coord_stmt_exec_time><total_routine_non_sect_proc_time>0</total_routine_non_sect_proc_time><total_routine_non_sect_time>0</total_routine_non_sect_time><total_section_proc_time>2</total_section_proc_time><total_section_time>3</total_section_time><total_app_section_executions>1</total_app_section_executions><total_routine_user_code_proc_time>0</total_routine_user_code_proc_time><total_routine_user_code_time>0</total_routine_user_code_time><total_routine_time>0</total_routine_time><thresh_violations>0</thresh_violations><num_lw_thresh_exceeded>0</num_lw_thresh_exceeded><total_routine_invocations>0</total_routine_invocations><lock_wait_time_global>0</lock_wait_time_global><lock_waits_global>0</lock_waits_global><reclaim_wait_time>0</reclaim_wait_time><spacemappage_reclaim_wait_time>0</spacemappage_reclaim_wait_time><lock_timeouts_global>0</lock_timeouts_global><lock_escals_maxlocks>0</lock_escals_maxlocks><lock_escals_locklist>0</lock_escals_locklist><lock_escals_global>0</lock_escals_global><cf_wait_time>0</cf_wait_time><cf_waits>0</cf_waits><pool_data_gbp_l_reads>0</pool_data_gbp_l_reads><pool_data_gbp_p_reads>0</pool_data_gbp_p_reads><pool_data_lbp_pages_found>12</pool_data_lbp_pages_found><pool_data_gbp_invalid_pages>0</pool_data_gbp_invalid_pages><pool_index_gbp_l_reads>0</pool_index_gbp_l_reads><pool_index_gbp_p_reads>0</pool_index_gbp_p_reads><pool_index_lbp_pages_found>17</pool_index_lbp_pages_found><pool_index_gbp_invalid_pages>0</pool_index_gbp_invalid_pages><pool_xda_gbp_l_reads>0</pool_xda_gbp_l_reads><pool_xda_gbp_p_reads>0</pool_xda_gbp_p_reads><pool_xda_lbp_pages_found>17</pool_xda_lbp_pages_found><pool_xda_gbp_invalid_pages>0</pool_xda_gbp_invalid_pages><evmon_wait_time>0</evmon_wait_time><evmon_waits_total>0</evmon_waits_total><total_extended_latch_wait_time>0</total_extended_latch_wait_time><total_extended_latch_waits>0</total_extended_latch_waits><total_disp_run_queue_time>0</total_disp_run_queue_time><pool_queued_async_data_reqs>0</pool_queued_async_data_reqs><pool_queued_async_index_reqs>0</pool_queued_async_index_reqs><pool_queued_async_xda_reqs>0</pool_queued_async_xda_reqs><pool_queued_async_temp_data_reqs>0</pool_queued_async_temp_data_reqs><pool_queued_async_temp_index_reqs>0</pool_queued_async_temp_index_reqs><pool_queued_async_temp_xda_reqs>0</pool_queued_async_temp_xda_reqs><pool_queued_async_other_reqs>0</pool_queued_async_other_reqs><pool_queued_async_data_pages>0</pool_queued_async_data_pages><pool_queued_async_index_pages>0</pool_queued_async_index_pages><pool_queued_async_xda_pages>0</pool_queued_async_xda_pages><pool_queued_async_temp_data_pages>0</pool_queued_async_temp_data_pages><pool_queued_async_temp_index_pages>0</pool_queued_async_temp_index_pages><pool_queued_async_temp_xda_pages>0</pool_queued_async_temp_xda_pages><pool_failed_async_data_reqs>0</pool_failed_async_data_reqs><pool_failed_async_index_reqs>0</pool_failed_async_index_reqs><pool_failed_async_xda_reqs>0</pool_failed_async_xda_reqs><pool_failed_async_temp_data_reqs>0</pool_failed_async_temp_data_reqs><pool_failed_async_temp_index_reqs>0</pool_failed_async_temp_index_reqs><pool_failed_async_temp_xda_reqs>0</pool_failed_async_temp_xda_reqs><pool_failed_async_other_reqs>0</pool_failed_async_other_reqs><total_peds>0</total_peds><disabled_peds>0</disabled_peds><post_threshold_peds>0</post_threshold_peds><total_peas>0</total_peas><post_threshold_peas>0</post_threshold_peas><tq_sort_heap_requests>0</tq_sort_heap_requests><tq_sort_heap_rejections>0</tq_sort_heap_rejections><prefetch_wait_time>0</prefetch_wait_time><prefetch_waits>0</prefetch_waits><pool_data_gbp_indep_pages_found_in_lbp>12</pool_data_gbp_indep_pages_found_in_lbp><pool_index_gbp_indep_pages_found_in_lbp>17</pool_index_gbp_indep_pages_found_in_lbp><pool_xda_gbp_indep_pages_found_in_lbp>17</pool_xda_gbp_indep_pages_found_in_lbp><fcm_tq_recv_waits_total>0</fcm_tq_recv_waits_total><fcm_message_recv_waits_total>0</fcm_message_recv_waits_total><fcm_tq_send_waits_total>0</fcm_tq_send_waits_total><fcm_message_send_waits_total>0</fcm_message_send_waits_total><fcm_send_waits_total>0</fcm_send_waits_total><fcm_recv_waits_total>0</fcm_recv_waits_total><ida_send_wait_time>0</ida_send_wait_time><ida_sends_total>0</ida_sends_total><ida_send_volume>0</ida_send_volume><ida_recv_wait_time>0</ida_recv_wait_time><ida_recvs_total>0</ida_recvs_total><ida_recv_volume>0</ida_recv_volume><rows_deleted>0</rows_deleted><rows_inserted>0</rows_inserted><rows_updated>0</rows_updated><total_hash_joins>0</total_hash_joins><total_hash_loops>0</total_hash_loops><hash_join_overflows>0</hash_join_overflows><hash_join_small_overflows>0</hash_join_small_overflows><post_shrthreshold_hash_joins>0</post_shrthreshold_hash_joins><total_olap_funcs>0</total_olap_funcs><olap_func_overflows>0</olap_func_overflows><int_rows_deleted>0</int_rows_deleted><int_rows_inserted>0</int_rows_inserted><int_rows_updated>0</int_rows_updated><comm_exit_wait_time>0</comm_exit_wait_time><comm_exit_waits>0</comm_exit_waits><pool_col_l_reads>0</pool_col_l_reads><pool_temp_col_l_reads>0</pool_temp_col_l_reads><pool_col_p_reads>0</pool_col_p_reads><pool_temp_col_p_reads>0</pool_temp_col_p_reads><pool_col_lbp_pages_found>0</pool_col_lbp_pages_found><pool_col_writes>0</pool_col_writes><pool_col_gbp_l_reads>0</pool_col_gbp_l_reads><pool_col_gbp_p_reads>0</pool_col_gbp_p_reads><pool_col_gbp_invalid_pages>0</pool_col_gbp_invalid_pages><pool_col_gbp_indep_pages_found_in_lbp>0</pool_col_gbp_indep_pages_found_in_lbp><pool_queued_async_col_reqs>0</pool_queued_async_col_reqs><pool_queued_async_temp_col_reqs>0</pool_queued_async_temp_col_reqs><pool_queued_async_col_pages>0</pool_queued_async_col_pages><pool_queued_async_temp_col_pages>0</pool_queued_async_temp_col_pages><pool_failed_async_col_reqs>0</pool_failed_async_col_reqs><pool_failed_async_temp_col_reqs>0</pool_failed_async_temp_col_reqs><total_col_proc_time>0</total_col_proc_time><total_col_time>0</total_col_time><total_col_executions>0</total_col_executions><post_threshold_hash_joins>0</post_threshold_hash_joins><pool_caching_tier_page_read_time>0</pool_caching_tier_page_read_time><pool_caching_tier_page_write_time>0</pool_caching_tier_page_write_time><pool_data_caching_tier_l_reads>0</pool_data_caching_tier_l_reads><pool_index_caching_tier_l_reads>0</pool_index_caching_tier_l_reads><pool_xda_caching_tier_l_reads>0</pool_xda_caching_tier_l_reads><pool_col_caching_tier_l_reads>0</pool_col_caching_tier_l_reads><pool_data_caching_tier_page_writes>0</pool_data_caching_tier_page_writes><pool_index_caching_tier_page_writes>0</pool_index_caching_tier_page_writes><pool_xda_caching_tier_page_writes>0</pool_xda_caching_tier_page_writes><pool_col_caching_tier_page_writes>0</pool_col_caching_tier_page_writes><pool_data_caching_tier_page_updates>0</pool_data_caching_tier_page_updates><pool_index_caching_tier_page_updates>0</pool_index_caching_tier_page_updates><pool_xda_caching_tier_page_updates>0</pool_xda_caching_tier_page_updates><pool_col_caching_tier_page_updates>0</pool_col_caching_tier_page_updates><pool_data_caching_tier_pages_found>0</pool_data_caching_tier_pages_found><pool_index_caching_tier_pages_found>0</pool_index_caching_tier_pages_found><pool_xda_caching_tier_pages_found>0</pool_xda_caching_tier_pages_found><pool_col_caching_tier_pages_found>0</pool_col_caching_tier_pages_found><pool_data_caching_tier_gbp_invalid_pages>0</pool_data_caching_tier_gbp_invalid_pages><pool_index_caching_tier_gbp_invalid_pages>0</pool_index_caching_tier_gbp_invalid_pages><pool_xda_caching_tier_gbp_invalid_pages>0</pool_xda_caching_tier_gbp_invalid_pages><pool_col_caching_tier_gbp_invalid_pages>0</pool_col_caching_tier_gbp_invalid_pages><pool_data_caching_tier_gbp_indep_pages_found>0</pool_data_caching_tier_gbp_indep_pages_found><pool_index_caching_tier_gbp_indep_pages_found>0</pool_index_caching_tier_gbp_indep_pages_found><pool_xda_caching_tier_gbp_indep_pages_found>0</pool_xda_caching_tier_gbp_indep_pages_found><pool_col_caching_tier_gbp_indep_pages_found>0</pool_col_caching_tier_gbp_indep_pages_found><total_hash_grpbys>0</total_hash_grpbys><hash_grpby_overflows>0</hash_grpby_overflows><post_threshold_hash_grpbys>0</post_threshold_hash_grpbys><post_threshold_olap_funcs>0</post_threshold_olap_funcs><post_threshold_col_vector_consumers>0</post_threshold_col_vector_consumers><total_col_vector_consumers>0</total_col_vector_consumers><total_index_build_proc_time>0</total_index_build_proc_time><total_index_build_time>0</total_index_build_time><total_indexes_built>0</total_indexes_built><ext_table_recv_wait_time>0</ext_table_recv_wait_time><ext_table_recvs_total>0</ext_table_recvs_total><ext_table_recv_volume>0</ext_table_recv_volume><ext_table_read_volume>0</ext_table_read_volume><ext_table_send_wait_time>0</ext_table_send_wait_time><ext_table_sends_total>0</ext_table_sends_total><ext_table_send_volume>0</ext_table_send_volume><ext_table_write_volume>0</ext_table_write_volume><col_vector_consumer_overflows>0</col_vector_consumer_overflows><total_col_synopsis_proc_time>0</total_col_synopsis_proc_time><total_col_synopsis_time>0</total_col_synopsis_time><total_col_synopsis_executions>0</total_col_synopsis_executions><col_synopsis_rows_inserted>0</col_synopsis_rows_inserted><lob_prefetch_wait_time>0</lob_prefetch_wait_time><lob_prefetch_reqs>0</lob_prefetch_reqs><fed_rows_deleted>0</fed_rows_deleted><fed_rows_inserted>0</fed_rows_inserted><fed_rows_updated>0</fed_rows_updated><fed_rows_read>0</fed_rows_read><fed_wait_time>0</fed_wait_time><fed_waits_total>0</fed_waits_total><adm_overflows>0</adm_overflows><adm_bypass_act_total>1</adm_bypass_act_total></activity_metrics>
+
+16) Activity Statement ...
+  Activity ID             : 1
+  Activity Secondary ID   : 0
+  Application Handle      : 230
+  Application ID          : *LOCAL.db2inst1.250902014044
+  UOW ID                  : 17
+
+  Lock timeout value      : -1
+  Query ID                : 0
+  Package cache ID        : 1262720385025
+  Statement ID            : 4164567726851687135
+  Plan ID                 : -7444666328158105813
+  Semantic Env ID         : 4836717360601346174
+  Package creator         : NULLID  
+  Package name            : SQLC2P31
+  Package version         : 
+  Section No              : 201
+  Statement No            : 1
+  Num Routines            : 0
+  Executable ID           : 0x01000000000000002B0000000000000000000000020020250902015503183603
+  Type                    : Dynamic
+  Nesting level of stmt   : 0
+  Source ID               : 0
+  Invocation ID           : 0
+  Routine ID              : 0
+  Isolation level         : Cursor Stability
+  Statement text          : select * from CUSTOMER
+  Effective statement text : 
+
+  Stmt first use time     : 09/02/2025 01:55:03.184177
+  Stmt last use time      : 09/02/2025 01:55:03.190961
+  Event Timestamp                    : 09/02/2025 01:55:03.191242
+  Time Created at Coordinator Member : 09/02/2025 01:55:03.184177
+```
+ 
+</details>
+
+### 1.5. Performance Monitor Logs
+
+Performance monitor logs provide insights into database health, resource consumption, and workload distribution. They are typically accessed through **Db2 snapshot monitors**, **`db2pd`**, or the **MON\_GET** monitoring interfaces.
+
+Some key methods include:
+
+* **`db2pd` utility**: Provides real-time diagnostic data about memory, locking, and logging.
+
+  ```bash
+  db2pd -db sample -logs
+  db2pd -db sample -locks
+  ```
+
+* **`MON_GET` table functions**: Queryable system views that expose metrics for CPU usage, I/O, buffer pools, and workloads.
+
+  ```bash
+  db2 "SELECT substr(workload_name,1,20) AS workload, total_cpu_time, total_act_time FROM TABLE(MON_GET_WORKLOAD(NULL,-2)) as t"
+  ```
+
+* **Performance Event Monitors**: Can be configured to write metrics to files or tables for longer-term analysis.
+
 ### 2\. Log Configuration and Modern Integration
 
 Configuring DB2's logging for external systems like Splunk, Loki, and Grafana primarily involves managing the diagnostic log, as it's the only one in a readily parsable, plain-text format.
@@ -444,6 +753,7 @@ As mentioned, transaction and audit logs are not in a human-readable format. Dir
   * **Audit Logs**: To use audit data, you must use the `db2audit extract` command. This command extracts the binary audit log files into delimited ASCII files. You could then set up an automated script to run this command periodically and have your log forwarding agent pick up the newly generated text files.
 
 For continuous, real-time ETL monitoring, a better approach than scraping logs is to use DB2's built-in monitoring functions and views, such as `MON_GET_WORKLOAD` or `MON_GET_ACTIVITY`, and collect metrics via an API. You can then use tools like Prometheus to scrape these metrics and send them to Grafana for a more performant and real-time dashboard. This is often preferred over log scraping for performance-centric tasks.
+
 
 
 
