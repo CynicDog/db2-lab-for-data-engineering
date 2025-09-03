@@ -1063,20 +1063,102 @@ CREATE FUNCTION resign_employee (number CHAR(6))
   * `SYSCAT.PROCEDURES` and `SYSCAT.FUNCTIONS` are your go-to views.
   * The `WHERE PROCSCHEMA NOT LIKE 'SYS%'` clause is a standard practice to exclude built-in IBM system procedures and focus on user-created objects.
 
-### Part B: Performance and Locking Diagnostics
+### Part B: RBAC (Role-Based Access Control) 
+
+DB2's security model is based on authorities, roles, and privileges. Understanding these concepts and how to query them is essential for auditing and managing user access in a production environment.
+
+#### 1\. Authorities & Roles
+
+**Authority** in DB2 is a high-level privilege that allows a user to perform a set of administrative tasks across an instance or database. A **role** is a named collection of privileges that can be granted to a user, group, or other roles. Roles simplify permission management by allowing administrators to bundle common privileges and manage them as a single entity.
+
+**What is Authority?**
+
+The `SYSCAT.DBAUTH` catalog view shows database-level authorities granted to users and groups. These authorities are for managing the database itself, not specific objects.
+
+```sql
+db2 "SELECT * FROM SYSCAT.DBAUTH"
+```
+
+  * **`GRANTEE`**: The user or group that has the authority.
+  * **`GRANTEETYPE`**: Specifies if the grantee is a user (`U`), group (`G`), or role (`R`).
+  * **`DBADMAUTH`**: `Y` if the user has `DBADM` authority, the highest level of database-specific control.
+  * **`CONNECTAUTH`**: `Y` if the user can connect to the database. This is a fundamental permission.
+  * **`SECADM`**: `Y` if the user has `SECADM` authority, which allows them to manage security-related objects like roles and trusted contexts.
+
+**What are Roles?**
+
+Roles are a powerful way to implement **RBAC**. They provide a layer of abstraction between the user and their privileges, making it easier to manage access in a complex environment.
+
+The `SYSCAT.ROLES` view lists all defined roles in the database.
+
+```sql
+db2 "SELECT * FROM SYSCAT.ROLES"
+```
+  * **`ROLENAME`**: The name of the role.
+
+The `SYSCAT.ROLEAUTH` view shows which users, groups, or roles have been granted a specific role.
+**Query:**
+
+```sql
+db2 "SELECT * FROM SYSCAT.ROLEAUTH"
+```
+
+  * **`ROLEID`**: The role that has been granted.
+  * **`GRANTEETYPE`**: The type of grantee (user, group, or role).
+  * **`GRANTEE`**: The user, group, or role that received the grant.
+
+#### 2\. Object Privileges
+
+Object privileges are permissions granted on specific database objects like tables, views, routines, and packages. These queries are crucial for auditing who can access or modify a particular piece of data.
+
+**Privileges on Tables and Views**
+
+The `SYSCAT.TABAUTH` and `SYSCAT.VIEWAUTH` views show who has privileges on a table or view.
+
+```sql
+db2 "SELECT GRANTEE, GRANTEETYPE, TABSCHEMA, TABNAME, CONTROLAUTH, SELECTAUTH, INSERTAUTH, DELETEAUTH, UPDATEAUTH, ALTERAUTH, INDEXAUTH FROM SYSCAT.TABAUTH WHERE TABSCHEMA = 'DB2INST1' AND TABNAME = 'EMPLOYEE'"
+```
+
+  * **`SELECTAUTH`**: `Y` if the grantee can select rows from the table.
+  * **`INSERTAUTH`**: `Y` if the grantee can insert new rows.
+  * **`UPDATEAUTH`**: `Y` if the grantee can update rows.
+  * **`DELETEAUTH`**: `Y` if the grantee can delete rows.
+  * **`CONTROLAUTH`**: The highest level of privilege on an object, essentially an `object-level DBADM`. A user with `CONTROLAUTH` can drop the table, grant privileges on it to others, and perform any action.
+
+**Privileges on Routines (Procedures and Functions)**
+
+The `SYSCAT.ROUTINEAUTH` view shows who has permission to execute a stored procedure or user-defined function.
+
+```sql
+db2 "SELECT GRANTEE, GRANTEETYPE, EXECUTEAUTH FROM SYSCAT.ROUTINEAUTH"
+```
+
+**Privileges on Packages**
+
+Packages contain the executable forms of static SQL statements. Granting `EXECUTE` on a package allows a user to run the SQL statements it contains.
+
+```sql
+db2 "SELECT GRANTEE, GRANTEETYPE, PKGSCHEMA, PKGNAME, EXECUTEAUTH, BINDAUTH FROM SYSCAT.PACKAGEAUTH WHERE PKGSCHEMA = 'DB2INST1'"
+```
+
+  * **`EXECUTEAUTH`**: `Y` if the grantee can execute the statements in the package.
+  * **`BINDAUTH`**: `Y` if the grantee can bind the package.
+    
+### Part C: Performance and Locking Diagnostics
 
 #### 1\. Detailed Locking Information
 
 #### 2\. Finding Long-Running Statements
 
-### Part C: Storage and Resource Management
+### Part D: Storage and Resource Management
 
 #### 1\. Detailed Bufferpool Information
 
 #### 2\. Tablespace Containers and Disk Usage
 
-### Part D: Auditing and Security
+### Part E: Auditing and Security
 
 #### 1\. Finding Grants and Privileges on Objects
 
 #### 2\. Auditing Object Changes
+
