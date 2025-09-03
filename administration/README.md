@@ -1254,7 +1254,77 @@ DB2INST1                                                                        
 
 </details>
 
-    
+#### 📌 Scenario Example: Payroll System
+
+##### Step 1: Define Roles
+
+```sql
+-- Role for payroll analysts
+CREATE ROLE PAYROLL_ANALYST;
+
+-- Role for HR managers (more privileges)
+CREATE ROLE HR_MANAGER;
+```
+
+##### Step 2: Grant Object Privileges to Roles
+
+```sql
+-- PAYROLL_ANALYST can read employee and salary tables
+GRANT SELECT ON TABLE HR.EMPLOYEES TO ROLE PAYROLL_ANALYST;
+GRANT SELECT ON TABLE HR.SALARIES TO ROLE PAYROLL_ANALYST;
+
+-- HR_MANAGER can update salary info
+GRANT SELECT, UPDATE ON TABLE HR.SALARIES TO ROLE HR_MANAGER;
+```
+
+##### Step 3: Grant Roles to Users
+
+```sql
+-- Alice is a payroll analyst
+GRANT PAYROLL_ANALYST TO USER ALICE;
+
+-- Bob is HR manager (inherits payroll privileges as well)
+GRANT HR_MANAGER TO USER BOB;
+```
+
+* **Alice** can only **read** employee and salary data.
+* **Bob** can **read & update** salary data.
+
+##### Step 4: Authorities (Optional)
+
+```sql
+-- HR_MANAGER role also includes DBADM-like authority for auditing
+GRANT DATAACCESS ON DATABASE TO ROLE HR_MANAGER;
+```
+
+* Bob can now also **connect and run certain system-level queries**, while Alice cannot.
+
+##### Step 5: Role Hierarchy (Optional)
+
+```sql
+-- Make HR_MANAGER inherit PAYROLL_ANALYST automatically
+GRANT PAYROLL_ANALYST TO ROLE HR_MANAGER;
+```
+
+* Now anyone with HR\_MANAGER also gets all privileges of PAYROLL\_ANALYST.
+
+#### How it All Works Together
+
+| User  | Roles Assigned   | Object Privileges via Roles                                            | Authorities via Roles |
+| ----- | ---------------- | ---------------------------------------------------------------------- | --------------------- |
+| Alice | PAYROLL\_ANALYST | SELECT on EMPLOYEES, SALARIES                                          | None                  |
+| Bob   | HR\_MANAGER      | SELECT, UPDATE on SALARIES, SELECT on EMPLOYEES (via PAYROLL\_ANALYST) | DATAACCESS            |
+
+* When **Alice runs a query**, DB2 checks:
+
+  1. Does she have a role granting the privilege? → Yes (`PAYROLL_ANALYST`)
+  2. Does she have the required object privilege? → Yes (`SELECT`)
+* When **Bob runs a query**, DB2 checks:
+
+  1. Roles → `HR_MANAGER`
+  2. Object privileges → `UPDATE` allowed on SALARIES table
+  3. Authorities → `DATAACCESS` allows reading system tables
+
 ### Part C: Performance and Locking Diagnostics
 
 #### 1\. Detailed Locking Information
@@ -1272,5 +1342,6 @@ DB2INST1                                                                        
 #### 1\. Finding Grants and Privileges on Objects
 
 #### 2\. Auditing Object Changes
+
 
 
