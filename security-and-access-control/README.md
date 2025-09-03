@@ -201,16 +201,64 @@ CREATE ROLE PAYROLL_ANALYST;
 CREATE ROLE HR_MANAGER;
 ```
 
+<details><summary>Examples</summary>
+
+```
+[db2inst1@bf1393c8be44 ~]$ db2 "SELECT * FROM SYSCAT.ROLES"
+
+ROLENAME                                                                                                                         ROLEID      CREATE_TIME                AUDITPOLICYID AUDITPOLICYNAME                                                                                                                  AUDITEXCEPTIONENABLED REMARKS                                                                                                                                                                                                                                                       
+-------------------------------------------------------------------------------------------------------------------------------- ----------- -------------------------- ------------- -------------------------------------------------------------------------------------------------------------------------------- --------------------- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DB2_MONITOR                                                                                                                             1001 2025-09-02-23.44.25.264075             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+ETL_ADMIN                                                                                                                               1000 2025-09-02-23.42.40.917066             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+(+) PAYROLL_ANALYST                                                                                                                     1002 2025-09-03-02.10.13.331005             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+(+) HR_MANAGER                                                                                                                          1003 2025-09-03-02.15.22.461421             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+SYSDEBUG                                                                                                                                  11 2025-09-02-23.08.41.055020             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+SYSDEBUGPRIVATE                                                                                                                           12 2025-09-02-23.08.41.055027             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+SYSTS_ADM                                                                                                                                  8 2025-09-02-23.08.41.054998             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+SYSTS_MGR                                                                                                                                  9 2025-09-02-23.08.41.055005             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+SYSTS_USR                                                                                                                                 10 2025-09-02-23.08.41.055013             - -                                                                                                                                N                     -                                                                                                                                                                                                                                                             
+
+  8 record(s) selected.
+```
+
+</details>
+
 ##### Step 2: Grant Object Privileges to Roles
 
 ```sql
 -- PAYROLL_ANALYST can read employee and salary tables
-GRANT SELECT ON TABLE HR.EMPLOYEES TO ROLE PAYROLL_ANALYST;
-GRANT SELECT ON TABLE HR.SALARIES TO ROLE PAYROLL_ANALYST;
+GRANT SELECT ON TABLE EMPLOYEE TO ROLE PAYROLL_ANALYST;
+GRANT SELECT ON TABLE SALE TO ROLE PAYROLL_ANALYST;
 
 -- HR_MANAGER can update salary info
-GRANT SELECT, UPDATE ON TABLE HR.SALARIES TO ROLE HR_MANAGER;
+GRANT SELECT, UPDATE ON TABLE SALES TO ROLE HR_MANAGER;
 ```
+
+<details><summary>Examples</summary>
+
+```
+[db2inst1@bf1393c8be44 ~]$ db2 "SELECT GRANTEE, GRANTEETYPE, TABSCHEMA, TABNAME, CONTROLAUTH, SELECTAUTH, INSERTAUTH, DELETEAUTH, UPDATEAUTH, ALTERAUTH, INDEXAUTH FROM SYSCAT.TABAUTH WHERE TABSCHEMA = 'DB2INST1' AND TABNAME = 'EMPLOYEE'"
+
+GRANTEE                                                                                                                          GRANTEETYPE TABSCHEMA                                                                                                                        TABNAME                                                                                                                          CONTROLAUTH SELECTAUTH INSERTAUTH DELETEAUTH UPDATEAUTH ALTERAUTH INDEXAUTH
+-------------------------------------------------------------------------------------------------------------------------------- ----------- -------------------------------------------------------------------------------------------------------------------------------- -------------------------------------------------------------------------------------------------------------------------------- ----------- ---------- ---------- ---------- ---------- --------- ---------
+DB2INST1                                                                                                                         U           DB2INST1                                                                                                                         EMPLOYEE                                                                                                                         Y           G          G          G          G          G         G        
+PAYROLL_ANALYST                                                                                                                  R           DB2INST1                                                                                                                         EMPLOYEE                                                                                                                         N           Y          N          N          N          N         N        
+
+  2 record(s) selected.
+
+[db2inst1@bf1393c8be44 ~]$ db2 "SELECT GRANTEE, GRANTEETYPE, TABSCHEMA, TABNAME, CONTROLAUTH, SELECTAUTH, INSERTAUTH, DELETEAUTH, UPDATEAUTH, ALTERAUTH, INDEXAUTH FROM SYSCAT.TABAUTH WHERE TABSCHEMA = 'DB2INST1' AND TABNAME = 'SALES'"
+
+GRANTEE                                                                                                                          GRANTEETYPE TABSCHEMA                                                                                                                        TABNAME                                                                                                                          CONTROLAUTH SELECTAUTH INSERTAUTH DELETEAUTH UPDATEAUTH ALTERAUTH INDEXAUTH
+-------------------------------------------------------------------------------------------------------------------------------- ----------- -------------------------------------------------------------------------------------------------------------------------------- -------------------------------------------------------------------------------------------------------------------------------- ----------- ---------- ---------- ---------- ---------- --------- ---------
+DB2INST1                                                                                                                         U           DB2INST1                                                                                                                         SALES                                                                                                                            Y           G          G          G          G          G         G        
+PAYROLL_ANALYST                                                                                                                  R           DB2INST1                                                                                                                         SALES                                                                                                                            N           Y          N          N          N          N         N        
+HR_MANAGER                                                                                                                       R           DB2INST1                                                                                                                         SALES                                                                                                                            N           Y          N          N          Y          N         N        
+
+  3 record(s) selected.
+
+```
+ 
+</details>
 
 ##### Step 3: Grant Roles to Users
 
@@ -222,8 +270,35 @@ GRANT PAYROLL_ANALYST TO USER ALICE;
 GRANT HR_MANAGER TO USER BOB;
 ```
 
-* **Alice** can only **read** employee and salary data.
-* **Bob** can **read & update** salary data.
+* **Alice** can only **read** employee and sales data.
+* **Bob** can **read & update** sales data.
+
+<details><summary>Examples</summary>
+
+```
+[root@bf1393c8be44 /]# sudo useradd -m ALICE
+[root@bf1393c8be44 /]# sudo useradd -m BOB
+[db2inst1@bf1393c8be44 ~]$ db2 "GRANT PAYROLL_ANALYST TO USER ALICE;"
+DB20000I  The SQL command completed successfully.
+[db2inst1@bf1393c8be44 ~]$ db2 "GRANT PAYROLL_ANALYST TO USER BOB;"
+DB20000I  The SQL command completed successfully.
+
+[db2inst1@bf1393c8be44 ~]$ db2 "SELECT * FROM SYSCAT.ROLEAUTH"
+
+GRANTOR                                                                                                                          GRANTORTYPE GRANTEE                                                                                                                          GRANTEETYPE ROLENAME                                                                                                                         ROLEID      ADMIN
+-------------------------------------------------------------------------------------------------------------------------------- ----------- -------------------------------------------------------------------------------------------------------------------------------- ----------- -------------------------------------------------------------------------------------------------------------------------------- ----------- -----
+SYSIBM                                                                                                                           S           DB2INST1                                                                                                                         U           SYSTS_ADM                                                                                                                                  8 N    
+SYSIBM                                                                                                                           S           DB2INST1                                                                                                                         U           SYSTS_MGR                                                                                                                                  9 N    
+SYSIBM                                                                                                                           S           DB2INST1                                                                                                                         U           SYSDEBUG                                                                                                                                  11 N    
+SYSIBM                                                                                                                           S           DB2INST1                                                                                                                         U           SYSDEBUGPRIVATE                                                                                                                           12 N    
+SYSIBM                                                                                                                           S           PUBLIC                                                                                                                           G           SYSTS_USR                                                                                                                                 10 N    
+(+) DB2INST1                                                                                                                         U           ALICE                                                                                                                            U           PAYROLL_ANALYST                                                                                                                     1002 N    
+(+) DB2INST1                                                                                                                         U           BOB                                                                                                                              U           PAYROLL_ANALYST                                                                                                                     1002 N    
+
+  7 record(s) selected.
+```
+
+</details>
 
 ##### Step 4: Authorities (Optional)
 
@@ -259,3 +334,4 @@ GRANT PAYROLL_ANALYST TO ROLE HR_MANAGER;
   1. Roles → `HR_MANAGER`
   2. Object privileges → `UPDATE` allowed on SALARIES table
   3. Authorities → `DATAACCESS` allows reading system tables
+
