@@ -94,6 +94,12 @@ index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 
 <img width="900" alt="image" src="https://github.com/user-attachments/assets/ffef01de-b56b-4960-b6b5-075f4595c761" />
 
+<details><summary>Record details</summary>
+
+  <img width="900" alt="image" src="https://github.com/user-attachments/assets/b6eb15de-52c2-4635-9c6a-5d326bd95da1" />
+  
+</details>
+
 **Extract table name using `rex`:**
 
 ```spl
