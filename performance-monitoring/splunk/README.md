@@ -128,3 +128,42 @@ index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 ```
 
 <img width="900" alt="image" src="https://github.com/user-attachments/assets/8b4973dd-eb76-48d6-a982-89348d475b98" />
+
+**Timechart of failed vs. successful ALTERs** 
+```spl
+index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
+| rename "status" as event_status
+| eval status=case(event_status=0,"Success", event_status!=0,"Failure")
+| timechart count by status
+```
+
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/7b9a4dd6-6862-435f-bae9-690043007ec4" />
+
+**Count ALTER TABLEs by user**
+```spl
+index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
+| rename "status" as event_status
+| stats count by userid
+```
+
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/573932fc-7469-4e7d-8d24-9944dabdf696" />
+
+**Detect all schema-changing events (DDL)**
+```spl
+index="db2_audit" sourcetype="db2_audit" "activity type=DDL"
+| rex field=_raw "statement text=ALTER TABLE (?<table_name>\w+)"
+| table _time database schema table_name userid text "status" 
+| sort _time
+```
+
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/e1d90f6a-ab19-4b5a-8a6f-8c962676b76f" />
+
+**Detect schema-changing events in time window**
+```
+index="db2_audit" sourcetype="db2_audit" "activity type=DDL" earliest=-1h@h 
+| rex field=_raw "statement text=ALTER TABLE (?<table_name>\w+)"
+| table _time database schema table_name userid text "status" 
+| sort _time
+```
+
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/3d4c4a1b-0618-4cc2-9460-ea300e721703" />
