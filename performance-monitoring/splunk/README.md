@@ -92,6 +92,8 @@ ls -l /database/config/db2inst1/audit.out
 index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 ```
 
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/ffef01de-b56b-4960-b6b5-075f4595c761" />
+
 **Extract table name using `rex`:**
 
 ```spl
@@ -99,6 +101,8 @@ index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 | rex field=_raw "statement text=ALTER TABLE (?<table_name>\w+)"
 | table _time, userid, table_name, statement text
 ```
+
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/961f9ea2-5696-41b3-9307-60a869224df3" />
 
 **Extract added column:**
 
@@ -108,9 +112,13 @@ index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 | table _time, userid, table_name, column_name, statement text
 ```
 
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/29bbc733-8c01-4b01-86ea-5bb91fa59fa4" />
+
 **Timechart for schema changes:**
 
 ```spl
 index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 | timechart count by table_name
 ```
+
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/8b4973dd-eb76-48d6-a982-89348d475b98" />
