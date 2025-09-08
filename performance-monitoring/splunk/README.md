@@ -48,7 +48,6 @@ ls /database/config/db2inst1/
 # db2audit.db.SAMPLE.log.0.20250908032653
 # db2audit.db.SAMPLE.log.0.20250908040602.      
 
-# TODO: automate a scheduled job to extract audit logs on regular basis 
 # Extract audit records to a readable file
 db2audit extract file /database/config/db2inst1/audit.out from files /database/config/db2inst1/db2audit.db.SAMPLE.log.0.20250908032653
 # Output:
@@ -56,6 +55,12 @@ db2audit extract file /database/config/db2inst1/audit.out from files /database/c
 
 # Ensure Splunk can read the file
 chmod 644 /database/config/db2inst1/audit.out
+```
+
+You can automate the audit log extraction as below: 
+
+```bash 
+*/5 * * * * docker exec db2 /database/config/db2inst1/extract_latest_audit.sh
 ```
 
 ### 4. Configure Splunk to Monitor the File 

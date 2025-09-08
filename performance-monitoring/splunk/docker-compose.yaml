@@ -10,6 +10,7 @@ services:
       - SAMPLEDB=true
     volumes:
       - db2:/database
+      - ./extract_latest_audit.sh:/database/config/db2inst1/extract_latest_audit.sh
     ports:
       - "50000:50000"
     command: >
