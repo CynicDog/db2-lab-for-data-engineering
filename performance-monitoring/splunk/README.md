@@ -129,10 +129,11 @@ index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
 
 ```spl
 index="db2_audit" sourcetype="db2_audit" "statement text=ALTER TABLE"
+| rex field=_raw "statement text=ALTER TABLE (?<table_name>\w+)"
 | timechart count by table_name
 ```
 
-<img width="900" alt="image" src="https://github.com/user-attachments/assets/8b4973dd-eb76-48d6-a982-89348d475b98" />
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/fe3bb2ef-be4b-4a1e-bede-64babfd1bbb0" />
 
 **Timechart of failed vs. successful ALTERs** 
 ```spl
